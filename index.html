@@ -132,15 +132,20 @@ async function generate(){
  const candidates=[...candidateMap.values()].map((x,i)=>toEntry(x,400+i));
  if(!candidates.length)throw Error("No verified candidate films were returned. The catalog may be temporarily unavailable.");
  setStatus("Loading verified genres, themes, and filmmaker credits...");
- const metadata=await features([...source.map(x=>x.key),...candidates.slice(0,60).map(x=>x.key)]);
+ const requestedKeys=[...new Set([...source.map(x=>x.key),...candidates.slice(0,60).map(x=>x.key)])];
+ const metadata=await features(requestedKeys);
  if(token!==runToken)return;
+ const firstMeta=metadata.values().next().value;
+ const diagnostic="Requested "+requestedKeys.length+" TMDB IDs · returned "+metadata.size+
+  " records · first response fields: "+(firstMeta?Object.keys(firstMeta).join(", "):"none");
+ console.info("[Afterlogue Lab] metadata diagnostic:",diagnostic);
  const sources=enrich(source,metadata),choices=enrich(candidates,metadata);
  const coverage=xs=>({titles:xs.length,genres:xs.filter(x=>x.facets.genres.length).length,
  themes:xs.filter(x=>x.facets.themes.length).length,tones:xs.filter(x=>x.facets.tones.length).length,
  directors:xs.filter(x=>x.facets.directors.length).length,writers:xs.filter(x=>x.facets.writers.length).length});
  const sourceCoverage=coverage(sources),candidateCoverage=coverage(choices);
  const stat=(name,x)=>name+": "+x.genres+"/"+x.titles+" genre · "+x.themes+"/"+x.titles+" theme · "+x.tones+"/"+x.titles+" tone · "+x.directors+"/"+x.titles+" director · "+x.writers+"/"+x.titles+" writer";
- $("audit").textContent="Fictional Log — "+stat("coverage",sourceCoverage)+" | Candidate pool — "+stat("coverage",candidateCoverage);
+ $("audit").textContent=diagnostic+" | Fictional Log — "+stat("coverage",sourceCoverage)+" | Candidate pool — "+stat("coverage",candidateCoverage);
  const ranked=engine.rank({entries:[...sources,...choices],category:"movies",impressions:ratings});
  const auditItems=ranked.slice(0,15);
  for(const item of auditItems){
