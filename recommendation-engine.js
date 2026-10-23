@@ -325,8 +325,20 @@ function rank({entries,category,impressions={},favorites=[],watchlist=[],seen=[]
   // substantially stronger than provisional Watchlist metadata.
   const interest=tasteMatch({dimensions:profile.interestDimensions},entry.facets);
   const interestBoost=Math.min(2.4,Math.max(0,interest.score*1.15));
-  const score=directScore+preference.score*2+interestBoost;
+  // Generic themes (family, identity, growing up) are weak evidence alone.
+  // Require multiple independent signals for a substantial cinematic match.
+  const meaningful=matched.filter(x=>x.signal.weight>=1.5);
+  const substantial=meaningful.filter(x=>
+    x.similarity.sharedTones.length>0||
+    x.similarity.sharedDirectors.length>0||
+    x.similarity.sharedWriters.length>0||
+    x.similarity.sharedThemes.some(t=>!["identity","family","control","belonging","survival","love","friendship","loss","growing-up"].includes(t)));
+  const distinctSources=new Set(substantial.map(x=>x.source.key)).size;
+  const shallowOnly=meaningful.length>0&&substantial.length===0;
+  const evidenceAdjustment=shallowOnly?-7:Math.min(3,Math.max(0,distinctSources-1)*1.25);
+  const score=directScore+preference.score*2+interestBoost+evidenceAdjustment;
   return {...entry,score:score+coldStart,preference,interest,
+    evidenceQuality:shallowOnly?"broad-theme-only":distinctSources>=2?"multi-source":distinctSources===1?"specific":"limited",
     matched:matched.sort((a,b)=>b.contribution-a.contribution)};
  });
  scored.sort((a,b)=>b.score-a.score||a.position-b.position||a.title.localeCompare(b.title));
@@ -352,8 +364,12 @@ function rank({entries,category,impressions={},favorites=[],watchlist=[],seen=[]
    const directlyLinked=entry.matched.find(x=>
      (entry.directMatches||[]).includes(x.source.key)||
      (entry.directMatches||[]).includes(slug(x.source.title)));
-   const strongest=directlyLinked||
-     entry.matched.find(x=>x.similarity.sharedThemes.length||x.similarity.sharedTones.length||x.similarity.sharedGenre.length)||
+   const strongest=entry.matched.find(x=>x.similarity.sharedDirectors.length||
+     x.similarity.sharedTones.length||x.similarity.sharedWriters.length)||
+     entry.matched.find(x=>x.similarity.sharedThemes.some(t=>
+       !["identity","family","control","belonging","survival","love","friendship","loss","growing-up"].includes(t)))||
+     directlyLinked||
+     entry.matched.find(x=>x.similarity.sharedThemes.length||x.similarity.sharedGenre.length)||
      entry.matched[0];
    let why=null;
    if(strongest){
@@ -362,9 +378,12 @@ function rank({entries,category,impressions={},favorites=[],watchlist=[],seen=[]
     const intro=signal.watchlist?"Because you saved "+source.title+" to your Watchlist, ":
       "Because you "+verb+" "+source.title+", ";
     const theme=similarity.sharedThemes.slice(0,2).map(x=>x.replace(/-/g," "));
-    if(theme.length)why=intro+"this story also explores "+(theme.length===2?theme.join(" and "):theme[0])+".";
+    if(similarity.sharedDirectors.length)why=intro+"both films share a director.";
+    else if(similarity.sharedTones.length&&theme.length)
+      why=intro+"this shares a "+similarity.sharedTones[0]+" tone and explores "+theme[0]+".";
     else if(similarity.sharedTones.length)why=intro+"this shares a "+similarity.sharedTones[0]+" tone.";
-    else if(similarity.sharedDirectors.length)why=intro+"both stories share a director.";
+    else if(similarity.sharedWriters.length)why=intro+"both films share a credited writer.";
+    else if(theme.length)why=intro+"this story also explores "+(theme.length===2?theme.join(" and "):theme[0])+".";
     else if(similarity.sharedGenre.length)why=intro+"it offers another perspective on "+similarity.sharedGenre[0]+".";
     else if(directlyLinked)why=intro+"this title appears among stories recommended alongside it in the wider catalog.";
    }
