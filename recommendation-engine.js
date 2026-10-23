@@ -290,8 +290,16 @@ function rank({entries,category,impressions={},favorites=[],watchlist=[],seen=[]
    const strength=sim.strength+(directlyMatched?2.2:0);
    if(strength<=0)continue;
    // Several titles in the same familiar genre do not overwhelm richer theme connections.
-   const contribution=signal.weight*Math.min(strength,9);
-   contributions.push({value:contribution,lane:storyLane(source),franchise:franchiseKey(source)});
+   // Score strong cinematic evidence before broad genre or theme overlap.
+   // Weak connections still contribute, but cannot stack into a dominant match.
+   const specificTheme=sim.sharedThemes.some(t=>!["identity","family","control","belonging","survival","love","friendship","loss","growing-up"].includes(t));
+   const hasSpecific=Boolean(sim.sharedDirectors.length||sim.sharedWriters.length||
+     sim.sharedTones.length||specificTheme||directlyMatched);
+   const weakOnly=!hasSpecific;
+   const adjustedStrength=weakOnly?Math.min(strength,1.1)*.38:strength;
+   const contribution=signal.weight*Math.min(adjustedStrength,9);
+   contributions.push({value:contribution,lane:storyLane(source),franchise:franchiseKey(source),
+     strong:hasSpecific,sourceKey:source.key});
    if(signal.weight>0&&(signal.weight>=1.5||signal.watchlist))matched.push({source,signal,similarity:sim,strength,contribution});
   }
   // Without prior feedback, respect the existing curated ordering.
@@ -318,7 +326,15 @@ function rank({entries,category,impressions={},favorites=[],watchlist=[],seen=[]
   }
   const adverse=contributions.filter(x=>x.value<0)
     .sort((a,b)=>a.value-b.value).slice(0,3);
-  const directScore=strong.reduce((sum,value)=>sum+value,0)+
+  // The best independent specific connections set the baseline; repeated
+  // generic overlap from a large Log cannot overwhelm those connections.
+  const strongEvidence=contributions.filter(x=>x.value>0&&x.strong)
+    .sort((a,b)=>b.value-a.value).slice(0,3);
+  const weakEvidence=contributions.filter(x=>x.value>0&&!x.strong)
+    .sort((a,b)=>b.value-a.value);
+  const specificScore=strongEvidence.reduce((sum,x,i)=>sum+x.value*(i===0?1:i===1?.55:.25),0);
+  const genericScore=Math.min(3,weakEvidence.reduce((sum,x,i)=>sum+x.value*(i===0?.45:.15),0));
+  const directScore=specificScore+genericScore+
     adverse.reduce((sum,item)=>sum+item.value,0);
   const preference=tasteMatch(profile,entry.facets);
   // A small bounded boost for emerging interests; keep long-term ratings
@@ -336,7 +352,10 @@ function rank({entries,category,impressions={},favorites=[],watchlist=[],seen=[]
   const distinctSources=new Set(substantial.map(x=>x.source.key)).size;
   const shallowOnly=meaningful.length>0&&substantial.length===0;
   const evidenceAdjustment=shallowOnly?-7:Math.min(3,Math.max(0,distinctSources-1)*1.25);
-  const score=directScore+preference.score*2+interestBoost+evidenceAdjustment;
+  // A broad-theme-only candidate should not receive a second large boost
+  // from the same generic themes through the global taste profile.
+  const preferenceScore=shallowOnly?Math.min(2,Math.max(-7,preference.score)):preference.score*2;
+  const score=directScore+preferenceScore+interestBoost+evidenceAdjustment;
   return {...entry,score:score+coldStart,preference,interest,
     evidenceQuality:shallowOnly?"broad-theme-only":distinctSources>=2?"multi-source":distinctSources===1?"specific":"limited",
     matched:matched.sort((a,b)=>b.contribution-a.contribution)};
