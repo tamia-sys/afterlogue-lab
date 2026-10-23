@@ -132,11 +132,11 @@ async function generate(){
  const candidates=[...candidateMap.values()].map((x,i)=>toEntry(x,400+i));
  if(!candidates.length)throw Error("No verified candidate films were returned. The catalog may be temporarily unavailable.");
  setStatus("Loading verified genres, themes, and filmmaker credits...");
- const metadata=await features([...source.map(x=>x.key),...candidates.slice(0,36).map(x=>x.key)]);
+ const metadata=await features([...source.map(x=>x.key),...candidates.slice(0,60).map(x=>x.key)]);
  if(token!==runToken)return;
  const sources=enrich(source,metadata),choices=enrich(candidates,metadata);
  const ranked=engine.rank({entries:[...sources,...choices],category:"movies",impressions:ratings});
- pool=Array.from(engine.balanceShelves({entries:ranked,profileEntries:[...sources,...choices],impressions:ratings,category:"movies"}))
+ pool=Array.from(engine.balanceShelves({entries:ranked,profileEntries:[...sources,...choices],impressions:ratings,category:"movies",size:Math.min(10,ranked.length)}))
   .filter(item=>item.score>0&&item.personalized&&item.matched?.length);
  const excluded=new Set(source.map(x=>x.key));pool=pool.filter(x=>!excluded.has(x.key));
  $("stats").textContent="Verified Log: "+found.length+"/"+logged.length+" · Candidates: "+candidates.length+" · Enriched: "+metadata.size+" · Qualified: "+pool.length;
