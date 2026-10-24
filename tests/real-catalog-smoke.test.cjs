@@ -54,6 +54,8 @@ test('public adapter uses only credential-free POST and reports bounded metadata
  assert.ok(result.provider.requests>=4);
  assert.ok(inputs.some(x=>x.mode==='taste-features'));
  assert.ok(result.summary.fingerprintRawKeywordCoverage>0);
+ assert.ok(result.summary.keywordRawLinkRate>0);
+ assert.ok(result.summary.keywordSpecificLinkRate<=result.summary.keywordRawLinkRate);
  assert.ok(result.profiles[0].withOriginalKeywords>0);
  assert.ok(inputs.every(x=>!('user_id' in x)&&!('rating' in x)&&!('email' in x)));
  assert.equal(JSON.stringify(result).includes('Catalog Test'),false);
