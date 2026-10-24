@@ -56,6 +56,8 @@ test('public adapter uses only credential-free POST and reports bounded metadata
  assert.ok(inputs.some(x=>x.mode==='taste-features'));
  assert.ok(result.summary.fingerprintRawKeywordCoverage>0);
  assert.ok(result.summary.keywordRawLinkRate>0);
+ assert.ok(result.summary.corroborationKeywordLinked>=0);
+ assert.ok(result.summary.corroborationKeywordLinked>=result.summary.corroborationWithIndependentFacet);
  assert.ok(result.summary.keywordSpecificLinkRate<=result.summary.keywordRawLinkRate);
  assert.equal(result.summary.keywordNegativeControlProfiles,1);
  assert.equal(result.profiles[0].negativeKeywordAnchors,2);
