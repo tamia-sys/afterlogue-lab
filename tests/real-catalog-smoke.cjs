@@ -17,6 +17,7 @@ const policy=require('../eligibility-policy.js');
 const anchorBalance=require('../evidence-balance.js');
 const fingerprint=require('../cinematic-fingerprint.js');
 const keywordAudit=require('../keyword-signal-audit.js');
+const corroboration=require('../evidence-corroboration.js');
 const narrative=require('../narrative-signals.js');
 
 // Exact existing LAB-only public endpoint. No keys, cookies or credentials.
@@ -109,7 +110,7 @@ function options(args){
 }
 async function execute(config={},settings={}){
  const adapter=makeAdapter(settings);
- const report=await run({...adapter,engine,cinematic,policy,anchorBalance,fingerprint,keywordAudit,
+ const report=await run({...adapter,engine,cinematic,policy,anchorBalance,fingerprint,keywordAudit,corroboration,
   profiles:PROFILES.slice(0,config.profileLimit||2),
   maxPlans:config.plans||2,maxCandidates:config.candidates||30});
  const result={
