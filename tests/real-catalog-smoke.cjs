@@ -82,7 +82,7 @@ function makeAdapter({fetchImpl=globalThis.fetch,timeoutMs=18000}={}){
    const f=lookup.get(entry.key);if(!f)return entry;
    return {...entry,collectionId:f.collectionId||entry.collectionId,
     facets:{genres:f.genres||entry.facets.genres,themes:f.themes||[],tones:f.tones||[],
-     directors:f.directors||[],writers:f.writers||[],pace:null,
+     directors:f.directors||[],writers:f.writers||[],keywordNames:f.keywordNames||[],pace:null,
      narrativeThemes:entry.facets.narrativeThemes||[]}};
   });
  }
