@@ -16,6 +16,7 @@ const cinematic=require('../taste-model-v2.js');
 const policy=require('../eligibility-policy.js');
 const anchorBalance=require('../evidence-balance.js');
 const fingerprint=require('../cinematic-fingerprint.js');
+const keywordAudit=require('../keyword-signal-audit.js');
 const narrative=require('../narrative-signals.js');
 
 // Exact existing LAB-only public endpoint. No keys, cookies or credentials.
@@ -106,7 +107,7 @@ function options(args){
 }
 async function execute(config={},settings={}){
  const adapter=makeAdapter(settings);
- const report=await run({...adapter,engine,cinematic,policy,anchorBalance,fingerprint,
+ const report=await run({...adapter,engine,cinematic,policy,anchorBalance,fingerprint,keywordAudit,
   profiles:PROFILES.slice(0,config.profileLimit||2),
   maxPlans:config.plans||2,maxCandidates:config.candidates||30});
  const result={
@@ -125,6 +126,11 @@ async function execute(config={},settings={}){
     rawKeywordLinkedTitles:p.fingerprintRawKeywordLinkedTitles,
     rawKeywordOnlyTitles:p.fingerprintRawKeywordOnlyTitles,
     rawKeywordUnqualifiedTitles:p.fingerprintRawKeywordUnqualifiedTitles,
+    specificKeywordLinkedTitles:p.keywordSpecificLinks,
+    genericKeywordOnlyTitles:p.keywordGenericOnly,
+    multiKeywordLinkedTitles:p.keywordMultiLabel,
+    negativeKeywordCollisions:p.keywordNegativeOverlap,
+    negativeKeywordAnchors:p.keywordNegativeAnchors,
     separateStoryDeviceTitles:p.fingerprintExplicitDeviceTitles,
     withSynopsis:p.fingerprintWithSynopsis,withCreatorCredit:p.fingerprintWithCreatorCredit,
     withMappedKeywords:p.fingerprintWithMappedKeywords,
