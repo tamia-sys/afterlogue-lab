@@ -62,6 +62,13 @@
     :Math.max(-9,Math.min(7,evidence-negativePenalty+Math.min(1.4,(matches.length-1)*.45)));
    const synopsisOnly=matches.length>0&&matches.every(m=>
     m.details.every(d=>d.type==="synopsis_topic"));
+   const distinctSynopsisTopics=new Set(matches.flatMap(m=>m.details
+    .filter(d=>d.type==="synopsis_topic").map(d=>d.value)));
+   // Do not promote a solitary synopsis keyword to independent evidence.
+   // Require either verified cinematic evidence, two Log anchors, or
+   // two distinct concrete synopsis topics supporting the same anchor.
+   const independentEvidence=matches.length>0&&(!synopsisOnly||
+    matches.length>=2||distinctSynopsisTopics.size>=2);
    const formatDetail=d=>d.type==="director"||d.type==="writer"?
     "shared "+d.type+" credit (verified TMDB ID)":
     d.type==="synopsis_topic"?"shared plot topic — "+d.value+" (synopsis clue)":
@@ -78,6 +85,8 @@
    return {...item,score:item.score+adjustment,cinematicEvidence:evidence,
     cinematicMetadata:multiEvidence?"specific":"partial",
     cinematicSynopsisOnly:synopsisOnly,
+    cinematicIndependent:independentEvidence,
+    cinematicSynopsisTopicCount:distinctSynopsisTopics.size,
     cinematicEvidenceKindCount:evidenceKinds.size,
     cinematicSignalCount:best.types,cinematicExplanation:explanation,
     cinematicEvidenceDetails:best.details,cinematicAnchor:best.types?best.source:null,
