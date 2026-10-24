@@ -82,6 +82,7 @@ if(!eligibility)throw Error("Recommendation eligibility policy failed to load.")
  $("save-state").textContent="Ready to save";
 
 const cache=new Map();let pool=[],seen=new Set(),page=0,runToken=0;const attraction=new Map(),familiarity=new Map(),trailerPass=new Set(),newDiscovery=new Map(),watchIntent=new Map();let allRanked=[],profileEntries=[],ratingSignals={},retrievalRound=0,fetchingMore=false;
+let deferredCatalog=new Map();
 profiles.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.name;$("persona").append(o)});
 function history(){const p=profiles[Number($("persona").value)],phase=Number($("phase").value);return [...p.base,...(phase>0?p.changes:[]),...(phase>1?p.later:[])];}
 function renderHistory(){
@@ -146,7 +147,7 @@ function diversifiedSeedPlans(anchors,rotation=0){
  return [...new Map(plans.map(p=>[p.join("|"),p])).values()].slice(0,18);
 }
 async function generate(){
- const token=++runToken;track("session_start",{payload:{action:"generate"}});pool=[];seen=new Set();page=0;attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();allRanked=[];retrievalRound=0;fetchingMore=false;$("run").disabled=true;$("again").disabled=true;
+ const token=++runToken;track("session_start",{payload:{action:"generate"}});pool=[];seen=new Set();page=0;attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();allRanked=[];retrievalRound=0;fetchingMore=false;deferredCatalog.clear();$("run").disabled=true;$("again").disabled=true;
  $("results").replaceChildren();$("stats").textContent="";$("audit").textContent="";$("audit-pool").replaceChildren();$("retrieval-audit").textContent="Initial retrieval in progress.";setStatus("Resolving fictional Log titles against the public film catalog...");
  try{
  const logged=history();const settled=await Promise.allSettled(logged.map(([title])=>resolveTitle(title)));
@@ -193,7 +194,9 @@ async function generate(){
   if(i<discoverSource.length&&mixed.length<120)mixed.push(discoverSource[i]);
  }
  const candidates=mixed.map((x,i)=>toEntry(x,400+i));
- const initialDeferred=candidateMap.size-candidates.length;
+ const evaluatedInitial=new Set(candidates.map(x=>x.key));
+ deferredCatalog=new Map([...candidateMap].filter(([key])=>!evaluatedInitial.has(key)));
+ const initialDeferred=deferredCatalog.size;
  $("retrieval-audit").textContent="Initial retrieval: "+plans.length+" title-seed plans + "+(initialBrowse.audit?.plans||0)+" Discover pages · "+candidateMap.size+" unique candidates ("+candidates.length+" evaluated; "+initialDeferred+" deferred; "+addedBrowse+" additional Discover films)";
  if(!candidates.length)throw Error("No verified candidate films were returned. The catalog may be temporarily unavailable.");
  setStatus("Loading verified genres, themes, and filmmaker credits...");
@@ -347,17 +350,29 @@ async function retrieveNextBatch(){
    }
   }
   const freshTotal=fresh.size;
-  // Rotate across fresh candidates rather than always evaluating API-order leaders.
-  const allFresh=[...fresh.values()];
+  // Keep unevaluated candidates from prior retrievals instead of silently
+  // throwing away everything beyond the metadata budget.
+  const deferredBefore=deferredCatalog.size;
+  const carry=[...deferredCatalog].slice(0,60);
+  const carryKeys=new Set(carry.map(([key])=>key));
+  const allFresh=[...fresh.values()].filter(item=>!carryKeys.has("tmdb-movie-"+item.id));
   const offset=(retrievalRound*53)%Math.max(1,allFresh.length);
-  const sampled=[...allFresh.slice(offset),...allFresh.slice(0,offset)].slice(0,120);
-  const candidates=sampled.map((item,i)=>toEntry(item,800+retrievalRound*200+i));
+  const rotated=[...allFresh.slice(offset),...allFresh.slice(0,offset)];
+  const sampled=rotated.slice(0,120-carry.length);
+  const candidates=[...carry.map(([,item],i)=>toEntry(item,800+retrievalRound*200+i)),
+   ...sampled.map((item,i)=>toEntry(item,860+retrievalRound*200+i))];
+  const evaluatedKeys=new Set(candidates.map(x=>x.key));
+  for(const key of evaluatedKeys)deferredCatalog.delete(key);
+  for(const item of fresh.values()){
+   const key="tmdb-movie-"+item.id;
+   if(!evaluatedKeys.has(key)&&!deferredCatalog.has(key))deferredCatalog.set(key,item);
+  }
   const pending=[...new Set(profileEntries.filter(x=>!ratingSignals[x.key]&&!seen.has(x.key)).map(x=>x.key))];
   // Already retrieved but never displayed is NOT a repeat. Include these
   // candidates in subsequent ranking rather than discarding a useful backlog.
   const summary="Retrieval "+retrievalRound+": "+(browseItems.length?"independent Discover bridge ("+(browse.audit?.plans||0)+" pages)":"fallback title recommendations ("+uniquePlans.length+" plans)")+" · "+
    returned+" results · "+invalid+" invalid · "+withinRound+" repeated within responses · "+
-   previouslyKnown+" already in pool · "+freshTotal+" genuinely new ("+candidates.length+" evaluated) · "+failed+" failed requests";
+   previouslyKnown+" already in pool · "+freshTotal+" newly retrieved · "+carry.length+" from deferred queue · "+candidates.length+" evaluated · "+deferredCatalog.size+" deferred · "+failed+" failed requests";
   $("retrieval-audit").textContent=summary;
   if(!candidates.length){
    // No newly retrieved titles is not the same as no eligible unseen titles.
@@ -390,6 +405,7 @@ async function retrieveNextBatch(){
   const rejected={
     fresh:enriched.length,
     backlog:pending.length,
+    deferredBefore,deferredAfter:deferredCatalog.size,
     lowScore:ranked.filter(x=>freshKeys.has(x.key)&&!(x.score>0)).length,
     notPersonalized:ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&!x.personalized).length,
     unmatched:ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&x.personalized&&!x.matched?.length).length,
