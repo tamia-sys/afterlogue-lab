@@ -53,17 +53,20 @@ function sanitize(raw){
   summary,profiles,
   disclaimer:'Aggregate structural evidence on a bounded public-catalog sample. Not human recommendation accuracy, not production results.'};
 }
-let report;
-try{
- report=sanitize(JSON.parse(fs.readFileSync(input,'utf8')));
-}catch(error){
- report={format:'afterlogue-aggregate-public-catalog-v1',
-  status:'report_not_available',checkedAt:new Date().toISOString(),
-  fictionalOnly:true,shadowFingerprintOnly:true,requests:null,
-  failedRequests:null,summary:{},profiles:[],
-  disclaimer:'No verified real-catalog report; consult GitHub Actions workflow logs.'};
+function publish(inputPath=input,outputPath=output){
+ let report;
+ try{
+  report=sanitize(JSON.parse(fs.readFileSync(inputPath,'utf8')));
+ }catch(error){
+  report={format:'afterlogue-aggregate-public-catalog-v1',
+   status:'report_not_available',checkedAt:new Date().toISOString(),
+   fictionalOnly:true,shadowFingerprintOnly:true,requests:null,
+   failedRequests:null,summary:{},profiles:[],
+   disclaimer:'No verified real-catalog report; consult GitHub Actions workflow logs.'};
+ }
+ fs.mkdirSync(path.dirname(outputPath),{recursive:true});
+ fs.writeFileSync(outputPath,JSON.stringify(report,null,2)+'\n',{mode:0o644});
+ return report.status;
 }
-fs.mkdirSync(path.dirname(output),{recursive:true});
-fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n',{mode:0o644});
-console.log('Wrote aggregate-only QA digest: '+report.status);
-module.exports={sanitize};
+if(require.main===module)console.log('Wrote aggregate-only QA digest: '+publish());
+module.exports={sanitize,publish};
