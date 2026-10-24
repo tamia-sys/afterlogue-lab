@@ -8,6 +8,7 @@ require('../recommendation-engine.js');
 const engine=globalThis.AfterlogueRecommendationEngine;
 const taste=require('../taste-model-v2.js');
 const policy=require('../eligibility-policy.js');
+const anchorBalance=require('../evidence-balance.js');
 
 const LANES=[
  {name:'intimate-realism',genres:['drama'],themes:['ordinary-life','connection','solitude'],tones:['intimate','reflective'],pace:'slow'},
@@ -60,7 +61,8 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
  assert.ok(Number.isInteger(perLane)&&perLane>=12&&perLane<=100);
  assert.ok(missingRate>=0&&missingRate<=.95&&shelfSize>=1&&shelfSize<=10);
  const source=catalog({perLane,missingRate,seed});
- const ranker=dependencies.engine||engine,cinematic=dependencies.taste||taste,eligibility=dependencies.policy||policy;
+ const ranker=dependencies.engine||engine,cinematic=dependencies.taste||taste,
+  eligibility=dependencies.policy||policy,balancer=dependencies.anchorBalance||anchorBalance;
  const observations=[];
  for(let i=0;i<personas;i++){
   const p=makePersona(i,source,{seed});
@@ -68,7 +70,10 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
   const ranked=ranker.rank({entries:source,category:'movies',impressions:scores});
   const adjusted=cinematic.rank(ranked,source,scores);
   const valid=eligibility.eligible(adjusted,{ratedKeys:[...keys]});
-  const shelf1=valid.slice(0,shelfSize),shelf2=valid.slice(shelfSize,shelfSize*2);
+  // Match the Lab's real post-eligibility two-stage shelf balancing.
+  const ordered=balancer.balance(ranker.balanceShelves({entries:valid,profileEntries:source,
+   impressions:scores,category:'movies',size:shelfSize}),shelfSize);
+  const shelf1=ordered.slice(0,shelfSize),shelf2=ordered.slice(shelfSize,shelfSize*2);
   const shown=[...shelf1,...shelf2];
   const duplicateCount=shown.length-new Set(shown.map(x=>x.key)).size;
   const loggedCount=shown.filter(x=>keys.has(x.key)).length;
