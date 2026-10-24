@@ -76,6 +76,18 @@
    keywordQualifiedWithMixedEvidence:sum('keywordQualifiedWithMixedEvidence'),
    keywordQualifiedWithExactConflict:sum('keywordQualifiedWithExactConflict'),
    keywordQualifiedWithNegativeOnly:sum('keywordQualifiedWithNegativeOnly'),
+   corroborationKeywordLinked:sum('corroborationKeywordLinked'),
+   corroborationKeywordOnly:sum('corroborationKeywordOnly'),
+   corroborationWithVerifiedCreator:sum('corroborationWithVerifiedCreator'),
+   corroborationWithSynopsisClue:sum('corroborationWithSynopsisClue'),
+   corroborationWithStoryDevice:sum('corroborationWithStoryDevice'),
+   corroborationWithIndependentFacet:sum('corroborationWithIndependentFacet'),
+   corroborationWithMultipleIndependentKinds:sum('corroborationWithMultipleIndependentKinds'),
+   corroborationCrossAnchorOnly:sum('corroborationCrossAnchorOnly'),
+   corroborationQualifiedWithIndependentFacet:sum('corroborationQualifiedWithIndependentFacet'),
+   corroborationQualifiedKeywordOnly:sum('corroborationQualifiedKeywordOnly'),
+   corroborationWithNegativeCollision:sum('corroborationWithNegativeCollision'),
+   corroborationWithNegativeCollisionAndIndependentFacet:sum('corroborationWithNegativeCollisionAndIndependentFacet'),
    keywordDifferentLabelConflictRate:ratio(sum('keywordDifferentLabelConflict'),sum('evaluatedCandidates')),
    multiSignalEligibleShare:ratio(sum('multiSignalEligible'),sum('qualified')),
    meanDistinctGenresFirstFive:mean('topGenres'),
@@ -85,7 +97,7 @@
    independentBrowseFailures:sum('browseFailures'),metadataFailures:sum('metadataFailures')};
  }
  async function run({profiles,api,resolveTitle,toEntry,features,enrich,engine,cinematic,policy,
-   anchorBalance,fingerprint=null,keywordAudit=null,onProgress=()=>{},shouldCancel=()=>false,maxPlans=4,maxCandidates=60}={}){
+   anchorBalance,fingerprint=null,keywordAudit=null,corroboration=null,onProgress=()=>{},shouldCancel=()=>false,maxPlans=4,maxCandidates=60}={}){
   if(!Array.isArray(profiles)||!profiles.length||profiles.length>20)throw Error('Choose 1–20 fictional viewer histories');
   if(![api,resolveTitle,toEntry,features,enrich].every(x=>typeof x==='function')||
      !engine?.rank||!cinematic?.rank||!policy?.eligible||!anchorBalance?.balance)
@@ -269,6 +281,29 @@
       keywordCatalogLabels:keywordStats?.catalogKeywordsSeen||0,
       keywordPoolCommonCutoff:keywordStats?.poolCommonCutoff||0
     };
+    // Corroboration requires distinct factual modalities tied to the SAME
+    // positive Log title as the keyword; same-source mapped tags do not count.
+    // Purely diagnostic: never passed into the existing ranker/policy.
+    const corroborationStats=corroboration?.inspect&&fingerprint&&keywordAudit
+     ?corroboration.inspect({
+       positive:complete.filter(x=>["Loved","Liked"].includes(ratings[x.key])),
+       negative:[...complete.filter(x=>ratings[x.key]==="Not for me"),...shadowNegativeEnriched],
+       candidates:candidateFeatures,qualifiedKeys:eligibleKeys,fingerprint,keywordAudit
+      }):null;
+    const corroborationCounts={
+      corroborationKeywordLinked:corroborationStats?.keywordLinked||0,
+      corroborationKeywordOnly:corroborationStats?.keywordOnly||0,
+      corroborationWithVerifiedCreator:corroborationStats?.keywordWithVerifiedCreator||0,
+      corroborationWithSynopsisClue:corroborationStats?.keywordWithSynopsisTopic||0,
+      corroborationWithStoryDevice:corroborationStats?.keywordWithExplicitStoryDevice||0,
+      corroborationWithIndependentFacet:corroborationStats?.keywordWithAnyIndependentFacet||0,
+      corroborationWithMultipleIndependentKinds:corroborationStats?.keywordWithTwoIndependentKinds||0,
+      corroborationCrossAnchorOnly:corroborationStats?.keywordWithDifferentAnchorFacetOnly||0,
+      corroborationQualifiedWithIndependentFacet:corroborationStats?.qualifiedWithIndependentFacet||0,
+      corroborationQualifiedKeywordOnly:corroborationStats?.qualifiedKeywordOnly||0,
+      corroborationWithNegativeCollision:corroborationStats?.keywordWithNegativeCollision||0,
+      corroborationWithNegativeCollisionAndIndependentFacet:corroborationStats?.corroboratedWithNegativeCollision||0
+    };
     const row={profile:profile.name,historyTitles:found.length,positiveAnchors:selected.length,
      titleRequests:plans.length,recommendationFailures,browseFailures,metadataFailures,
      invalidProviderItems:invalid,providerDuplicates:duplicated,uniqueRetrieved:all.length,
@@ -281,7 +316,7 @@
      qualified:eligible.length,multiSignalEligible:bestEvidenceMultiple,
      synopsisOnlyEligible:eligible.filter(x=>x.cinematicSynopsisOnly).length,
      legacyPositive:legacyRanked.filter(x=>x.score>0).length,
-     bestEvidenceNone,bestEvidenceSingle,bestEvidenceMultiple,...funnel,...routes,...fpSummary,...keywordCounts,
+     bestEvidenceNone,bestEvidenceSingle,bestEvidenceMultiple,...funnel,...routes,...fpSummary,...keywordCounts,...corroborationCounts,
      firstShelfComplete:Number(top.length===5),secondShelfComplete:Number(next.length===5),
      topGenres:unique(top.flatMap(x=>facetsOf(x).genres||[])).length,
      topAnchors:unique(top.map(x=>x.cinematicAnchor).filter(Boolean)).length,
@@ -309,6 +344,7 @@
    'Cinematic Fingerprint tags are experimental, based on literal synopsis phrasing, and are excluded from recommendation scoring.',
    'Keyword specificity is a within-sample heuristic. Multiple community tags are not independent proof of film similarity and do not affect scoring.',
    'Fictional shadow dislikes never change retrieval, ranking or eligibility; unresolved shadow controls reduce confidence in negative comparisons.',
+   'Corroboration counts cross-metadata evidence for the SAME positive Log film. TMDB synopsis clues are not verified film style or empirical human preference.',
     'No private Log, real member ID, or user interest responses were accessed.']};
  }
  return Object.freeze({run,summarize,chooseAnchors});
