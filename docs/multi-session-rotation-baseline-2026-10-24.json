@@ -1,0 +1,358 @@
+{
+  "schema": "afterlogue-multi-session-shadow-v1",
+  "date": "2026-10-24",
+  "basis": "Six fictional viewers, invented film attributes, zero community data and no changes to scores",
+  "catalogSize": 77,
+  "size": 5,
+  "rounds": 3,
+  "nearScorePromotionRatio": 0.8,
+  "scenarios": [
+    {
+      "scenario": "Fictional Eclectic",
+      "eligible": 56,
+      "firstFiveIdentical": true,
+      "rotations": 4,
+      "rotationEnabled": true,
+      "supportedLanes": 6,
+      "baselineDistinctTasteLanesIn15": 3,
+      "shadowDistinctTasteLanesIn15": 5,
+      "noRepeatedTitles": true,
+      "allPromotionsAboveScoreFloor": true,
+      "roundSummaries": [
+        {
+          "round": 1,
+          "baseline": {
+            "animation": 1,
+            "documentary": 2,
+            "drama": 2
+          },
+          "shadow": {
+            "animation": 1,
+            "documentary": 2,
+            "drama": 2
+          },
+          "baselineMeanScore": 60.41,
+          "shadowMeanScore": 60.41,
+          "promotions": 0
+        },
+        {
+          "round": 2,
+          "baseline": {
+            "animation": 1,
+            "documentary": 2,
+            "drama": 2
+          },
+          "shadow": {
+            "comedy": 1,
+            "documentary": 2,
+            "drama": 1,
+            "romance": 1
+          },
+          "baselineMeanScore": 60.41,
+          "shadowMeanScore": 58.02,
+          "promotions": 2
+        },
+        {
+          "round": 3,
+          "baseline": {
+            "animation": 1,
+            "documentary": 2,
+            "drama": 2
+          },
+          "shadow": {
+            "animation": 1,
+            "comedy": 1,
+            "documentary": 2,
+            "drama": 1
+          },
+          "baselineMeanScore": 60.41,
+          "shadowMeanScore": 59.09,
+          "promotions": 2
+        }
+      ]
+    },
+    {
+      "scenario": "Fictional Quiet Focus",
+      "eligible": 11,
+      "firstFiveIdentical": true,
+      "rotations": 0,
+      "rotationEnabled": false,
+      "supportedLanes": 2,
+      "baselineDistinctTasteLanesIn15": 2,
+      "shadowDistinctTasteLanesIn15": 2,
+      "noRepeatedTitles": true,
+      "allPromotionsAboveScoreFloor": true,
+      "roundSummaries": [
+        {
+          "round": 1,
+          "baseline": {
+            "documentary": 2,
+            "drama": 3
+          },
+          "shadow": {
+            "documentary": 2,
+            "drama": 3
+          },
+          "baselineMeanScore": 74.45,
+          "shadowMeanScore": 74.45,
+          "promotions": 0
+        },
+        {
+          "round": 2,
+          "baseline": {
+            "documentary": 3,
+            "drama": 2
+          },
+          "shadow": {
+            "documentary": 3,
+            "drama": 2
+          },
+          "baselineMeanScore": 67.28,
+          "shadowMeanScore": 67.28,
+          "promotions": 0
+        },
+        {
+          "round": 3,
+          "baseline": {
+            "documentary": 1
+          },
+          "shadow": {
+            "documentary": 1
+          },
+          "baselineMeanScore": 52.93,
+          "shadowMeanScore": 52.93,
+          "promotions": 0
+        }
+      ]
+    },
+    {
+      "scenario": "Fictional Exposure Baseline",
+      "eligible": 47,
+      "firstFiveIdentical": true,
+      "rotations": 4,
+      "rotationEnabled": true,
+      "supportedLanes": 3,
+      "baselineDistinctTasteLanesIn15": 3,
+      "shadowDistinctTasteLanesIn15": 3,
+      "noRepeatedTitles": true,
+      "allPromotionsAboveScoreFloor": true,
+      "roundSummaries": [
+        {
+          "round": 1,
+          "baseline": {
+            "comedy": 1,
+            "drama": 2,
+            "suspense": 2
+          },
+          "shadow": {
+            "comedy": 1,
+            "drama": 2,
+            "suspense": 2
+          },
+          "baselineMeanScore": 68.67,
+          "shadowMeanScore": 68.67,
+          "promotions": 0
+        },
+        {
+          "round": 2,
+          "baseline": {
+            "comedy": 1,
+            "drama": 2,
+            "suspense": 2
+          },
+          "shadow": {
+            "comedy": 2,
+            "drama": 2,
+            "suspense": 1
+          },
+          "baselineMeanScore": 68.67,
+          "shadowMeanScore": 66.36,
+          "promotions": 2
+        },
+        {
+          "round": 3,
+          "baseline": {
+            "comedy": 1,
+            "drama": 2,
+            "suspense": 2
+          },
+          "shadow": {
+            "comedy": 2,
+            "drama": 2,
+            "suspense": 1
+          },
+          "baselineMeanScore": 68.67,
+          "shadowMeanScore": 66.36,
+          "promotions": 2
+        }
+      ]
+    },
+    {
+      "scenario": "Fictional Exposure Loop",
+      "eligible": 37,
+      "firstFiveIdentical": true,
+      "rotations": 4,
+      "rotationEnabled": true,
+      "supportedLanes": 4,
+      "baselineDistinctTasteLanesIn15": 3,
+      "shadowDistinctTasteLanesIn15": 4,
+      "noRepeatedTitles": true,
+      "allPromotionsAboveScoreFloor": true,
+      "roundSummaries": [
+        {
+          "round": 1,
+          "baseline": {
+            "animation": 2,
+            "drama": 2,
+            "suspense": 1
+          },
+          "shadow": {
+            "animation": 2,
+            "drama": 2,
+            "suspense": 1
+          },
+          "baselineMeanScore": 79.06,
+          "shadowMeanScore": 79.06,
+          "promotions": 0
+        },
+        {
+          "round": 2,
+          "baseline": {
+            "animation": 2,
+            "drama": 2,
+            "suspense": 1
+          },
+          "shadow": {
+            "animation": 2,
+            "comedy": 1,
+            "drama": 2
+          },
+          "baselineMeanScore": 79.06,
+          "shadowMeanScore": 77.32,
+          "promotions": 2
+        },
+        {
+          "round": 3,
+          "baseline": {
+            "animation": 2,
+            "drama": 2,
+            "suspense": 1
+          },
+          "shadow": {
+            "comedy": 2,
+            "drama": 2,
+            "suspense": 1
+          },
+          "baselineMeanScore": 79.06,
+          "shadowMeanScore": 67.52,
+          "promotions": 2
+        }
+      ]
+    },
+    {
+      "scenario": "Fictional Genuine Animation Fan",
+      "eligible": 17,
+      "firstFiveIdentical": true,
+      "rotations": 0,
+      "rotationEnabled": false,
+      "supportedLanes": 2,
+      "baselineDistinctTasteLanesIn15": 2,
+      "shadowDistinctTasteLanesIn15": 2,
+      "noRepeatedTitles": true,
+      "allPromotionsAboveScoreFloor": true,
+      "roundSummaries": [
+        {
+          "round": 1,
+          "baseline": {
+            "animation": 5
+          },
+          "shadow": {
+            "animation": 5
+          },
+          "baselineMeanScore": 85.32,
+          "shadowMeanScore": 85.32,
+          "promotions": 0
+        },
+        {
+          "round": 2,
+          "baseline": {
+            "animation": 3,
+            "comedy": 2
+          },
+          "shadow": {
+            "animation": 3,
+            "comedy": 2
+          },
+          "baselineMeanScore": 67.77,
+          "shadowMeanScore": 67.77,
+          "promotions": 0
+        },
+        {
+          "round": 3,
+          "baseline": {
+            "animation": 2,
+            "comedy": 3
+          },
+          "shadow": {
+            "animation": 2,
+            "comedy": 3
+          },
+          "baselineMeanScore": 59,
+          "shadowMeanScore": 59,
+          "promotions": 0
+        }
+      ]
+    },
+    {
+      "scenario": "Fictional Sparse Starter",
+      "eligible": 16,
+      "firstFiveIdentical": true,
+      "rotations": 0,
+      "rotationEnabled": false,
+      "supportedLanes": 1,
+      "baselineDistinctTasteLanesIn15": 1,
+      "shadowDistinctTasteLanesIn15": 1,
+      "noRepeatedTitles": true,
+      "allPromotionsAboveScoreFloor": true,
+      "roundSummaries": [
+        {
+          "round": 1,
+          "baseline": {
+            "drama": 3
+          },
+          "shadow": {
+            "drama": 3
+          },
+          "baselineMeanScore": 37.96,
+          "shadowMeanScore": 37.96,
+          "promotions": 0
+        },
+        {
+          "round": 2,
+          "baseline": {
+            "drama": 3
+          },
+          "shadow": {
+            "drama": 3
+          },
+          "baselineMeanScore": 37.96,
+          "shadowMeanScore": 37.96,
+          "promotions": 0
+        },
+        {
+          "round": 3,
+          "baseline": {
+            "drama": 3
+          },
+          "shadow": {
+            "drama": 3
+          },
+          "baselineMeanScore": 37.96,
+          "shadowMeanScore": 37.96,
+          "promotions": 0
+        }
+      ]
+    }
+  ],
+  "note": "No human interest, enjoyment or validation. Scores are fictional metadata metrics; structural coverage is not precision or cinematic quality."
+}
