@@ -29,3 +29,22 @@ TMDB keywords and credits are sparse proxies for pacing, tone and emotional
 texture. A match on one shared mood keyword is not proof of user preference.
 A passing unit test is not proof of recommendation appeal.
 No live user data is needed for the synthetic comparison.
+
+## Reproducible v2.1 catalog comparison
+
+The experimental lab now offers **Export diagnostic snapshot** after generating
+a batch. This downloads only public catalog data and the selected fictional
+viewer history, never a member Log or account identifier.
+
+Run `node tests/compare-snapshot.cjs path/to/snapshot.json` from the repository
+root. The script re-ranks the identical candidate set twice:
+
+- Catalog-only v2 behavior, with synopsis topics disabled and legacy
+  personalization eligibility.
+- v2.1, with conservative synopsis topics, corroboration and comparable-score
+  anchor balancing.
+
+The output records candidate counts, qualified counts, synopsis-only matches,
+top-five anchor diversity and top-five overlap. These are structural measures,
+not a human preference score. Do not call v2.1 better without blind watch-interest
+feedback from the same fictional profiles and actual metadata coverage.
