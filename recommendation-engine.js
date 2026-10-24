@@ -403,7 +403,7 @@ function rank({entries,category,impressions={},favorites=[],watchlist=[],seen=[]
     else if(similarity.sharedTones.length)why=intro+"this shares a "+similarity.sharedTones[0]+" tone.";
     else if(similarity.sharedWriters.length)why=intro+"both films share a credited writer.";
     else if(theme.length)why=intro+"this story also explores "+(theme.length===2?theme.join(" and "):theme[0])+".";
-    else if(similarity.sharedGenre.length)why=intro+"it offers another perspective on "+similarity.sharedGenre[0]+".";
+    else if(similarity.sharedGenre.length)why="Exploratory suggestion: shares the "+similarity.sharedGenre[0]+" genre with "+source.title+", but a stronger cinematic connection is not yet verified.";
     else if(directlyLinked)why=intro+"this title appears among stories recommended alongside it in the wider catalog.";
    }
    // A plot synopsis is not an explanation of taste. Be clear when there
