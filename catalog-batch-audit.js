@@ -73,6 +73,10 @@
    keywordMixedEvidenceRate:ratio(sum('keywordMixedPositiveNegative'),sum('evaluatedCandidates')),
    keywordNegativeControlProfiles:successes.filter(x=>x.keywordNegativeAnchors>0).length,
    keywordShadowNegativesUnresolved:sum('keywordShadowNegativesUnresolved'),
+   keywordQualifiedWithMixedEvidence:sum('keywordQualifiedWithMixedEvidence'),
+   keywordQualifiedWithExactConflict:sum('keywordQualifiedWithExactConflict'),
+   keywordQualifiedWithNegativeOnly:sum('keywordQualifiedWithNegativeOnly'),
+   keywordDifferentLabelConflictRate:ratio(sum('keywordDifferentLabelConflict'),sum('evaluatedCandidates')),
    multiSignalEligibleShare:ratio(sum('multiSignalEligible'),sum('qualified')),
    meanDistinctGenresFirstFive:mean('topGenres'),
    meanDistinctPositiveLogAnchorsFirstFive:mean('topAnchors'),
@@ -244,7 +248,7 @@
     const keywordStats=(keywordAudit?.inspect)?keywordAudit.inspect({
       positive:complete.filter(x=>["Loved","Liked"].includes(ratings[x.key])),
       negative:[...complete.filter(x=>ratings[x.key]==="Not for me"),...shadowNegativeEnriched],
-      candidates:candidateFeatures
+      candidates:candidateFeatures,qualifiedKeys:eligibleKeys
     }):null;
     const keywordCounts={
       keywordRawLinks:keywordStats?.candidatesWithRawPositiveOverlap||0,
@@ -256,6 +260,10 @@
       keywordNegativeOnly:keywordStats?.candidatesWithNegativeOnly||0,
       keywordPositiveOnly:keywordStats?.candidatesWithPositiveOnly||0,
       keywordMixedPositiveNegative:keywordStats?.candidatesWithMixedPositiveNegative||0,
+      keywordDifferentLabelConflict:keywordStats?.candidatesWithDifferentLabelConflict||0,
+      keywordQualifiedWithMixedEvidence:keywordStats?.qualifiedWithMixedEvidence||0,
+      keywordQualifiedWithExactConflict:keywordStats?.qualifiedWithExactKeywordConflict||0,
+      keywordQualifiedWithNegativeOnly:keywordStats?.qualifiedWithNegativeOnly||0,
       keywordNegativeAnchors:keywordStats?.negativeAnchors||0,
       keywordShadowNegativesUnresolved,
       keywordCatalogLabels:keywordStats?.catalogKeywordsSeen||0,
