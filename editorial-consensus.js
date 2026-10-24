@@ -40,7 +40,14 @@
   let jointlyReviewed=0,withTwoAgreed=0,fullyUnknown=0,dimensionsAgreed=0,dimensionsDisagreed=0;
   for(const entry of pilot.slate){
    const left=reviews[0].get(entry.key),right=reviews[1].get(entry.key);
-   if(!left||!right){fullyUnknown++;continue}
+   if(!left||!right){
+    fullyUnknown++;
+    // Keep the film in the evaluation slate. A missing review is not a
+    // reason to silently exclude an unfamiliar title from denominator.
+    films.push({key:entry.key,agreed:{},conflicted:[],unobserved:[...fields],
+     usable:false,agreedDimensionCount:0});
+    continue;
+   }
    jointlyReviewed++;
    const agreed={},conflicted=[],unobserved=[];
    for(const field of fields){
