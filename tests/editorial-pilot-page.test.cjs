@@ -38,3 +38,13 @@ test('pilot is research-only and available without involuntary upload',()=>{
  assert.match(html,/2–6 separate reviewer exports/);
  assert.match(html,/not a technically enforced blind study/);
 });
+
+test('small-sample chance correction is explanatory, not displayed as a success claim',()=>{
+ assert.match(html,/summary\.kappaEstimatedDimensions/);
+ assert.match(html,/reliability\.cohensKappa===null\?"Not estimated"/);
+ assert.match(html,/reliability\.status\.replaceAll/);
+ assert.match(html,/Chance-adjusted statistics require exactly two different reviewers/);
+ assert.match(html,/small-sample estimates remain exploratory/);
+ assert.match(html,/overflowX="auto"/);
+ assert.doesNotMatch(html,/\bproduction\s+ready\b/i);
+});
