@@ -1,0 +1,28 @@
+name: Cinematic Editorial Pilot QA
+on:
+  push:
+    branches: [main]
+    paths:
+      - editorial-evidence.js
+      - editorial-evaluation.js
+      - editorial-pilot.js
+      - editorial-pilot.html
+      - tests/editorial-evidence.test.cjs
+      - tests/editorial-evaluation.test.cjs
+      - tests/editorial-pilot.test.cjs
+      - tests/editorial-pilot-page.test.cjs
+      - .github/workflows/editorial-pilot-qa.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-review-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate original reviews, offline export and inter-reviewer comparison
+        run: node --test tests/editorial-evidence.test.cjs tests/editorial-evaluation.test.cjs tests/editorial-pilot.test.cjs tests/editorial-pilot-page.test.cjs
