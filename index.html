@@ -550,6 +550,36 @@ function showNext(override=null){
 }
 $("persona").addEventListener("change",()=>{runToken++;pool=[];seen.clear();attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();$("discovery-audit").textContent="";$("again").disabled=true;renderHistory();$("results").textContent="Generate to see this viewer's recommendations.";setStatus("")});
 $("phase").addEventListener("change",()=>{runToken++;pool=[];seen.clear();attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();$("again").disabled=true;renderHistory();$("results").textContent="Generate to see this session's recommendations.";setStatus("")});
+function exportDiagnosticSnapshot(){
+ if(!allRanked.length)return;
+ const selected=profiles[Number($("persona").value)];
+ const items=profileEntries.map(x=>({
+  key:x.key,title:x.title,year:x.year||null,category:x.category,
+  synopsis:x.synopsis||"",position:x.position,directMatches:x.directMatches||[],
+  collectionId:x.collectionId||null,facets:x.facets||{},
+  rating:ratingSignals[x.key]||null
+ }));
+ const ranked=allRanked.map(x=>({
+  key:x.key,title:x.title,score:x.score,cinematicAnchor:x.cinematicAnchor||null,
+  cinematicAnchorCount:x.cinematicAnchorCount||0,
+  cinematicSignalCount:x.cinematicSignalCount||0,
+  cinematicEvidenceKindCount:x.cinematicEvidenceKindCount||0,
+  cinematicSynopsisOnly:Boolean(x.cinematicSynopsisOnly),
+  cinematicIndependent:Boolean(x.cinematicIndependent),
+  cinematicNegativePenalty:x.cinematicNegativePenalty||0,
+  cinematicExplanation:x.cinematicExplanation||"",
+  eligible:eligibility.eligible([x],{ratedKeys:Object.keys(ratingSignals)}).length>0,
+  displayed:seen.has(x.key)
+ }));
+ const snapshot={format:"afterlogue-lab-diagnostic-v1",build:"taste-v2.1",
+  exportedAt:new Date().toISOString(),persona:selected.name,phase:Number($("phase").value),
+  fictionalLog:history(),items,ranked};
+ const file=new Blob([JSON.stringify(snapshot,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(file),link=document.createElement("a");
+ link.href=url;link.download="afterlogue-lab-v2-1-"+String($("persona").value)+"-"+String($("phase").value)+".json";
+ document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+$("export-audit").addEventListener("click",exportDiagnosticSnapshot);
 $("run").addEventListener("click",generate);$("again").addEventListener("click",discoverAgain);renderHistory();
 })();
 </script>
