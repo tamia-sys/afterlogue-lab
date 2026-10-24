@@ -72,7 +72,9 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5,
   const p=makePersona(i,source,{seed});
   const keys=new Set(p.log.keys()),scores=Object.fromEntries(p.log);
   const retrieved=retrieval.retrieve(source,p.log,{strategy:retrievalStrategy,
-    maxAnchors:8,perAnchor:18,limit:candidateBudget});
+    maxAnchors:8,
+    // Hold the nominal provider result budget constant across both strategies.
+    perAnchor:Math.ceil(candidateBudget/(retrievalStrategy==='two-seed'?2:8)),limit:candidateBudget});
   const testPool=[...source.filter(x=>keys.has(x.key)),...retrieved.items];
   const ranked=ranker.rank({entries:testPool,category:'movies',impressions:scores});
   const adjusted=cinematic.rank(ranked,testPool,scores);
