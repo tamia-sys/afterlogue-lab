@@ -1,0 +1,5 @@
+# Benchmark data, screenshots, and generated reports (never commit real rating histories)
+ml-latest-small/
+ml-latest/
+reports/
+*.benchmark-output.json
