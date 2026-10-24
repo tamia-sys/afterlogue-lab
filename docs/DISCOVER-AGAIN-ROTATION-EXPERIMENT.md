@@ -2,6 +2,12 @@
 
 **October 24, 2026.** A bounded, offline *shadow* comparison on fictional movie Logs and invented catalog facts. No production recommendations, Supabase data, community film tags, paid metadata purchases, or actual user's Log were modified or consulted.
 
+## New relevance warning (same date)
+
+A follow-on counterfactual using separate, **entirely fictional film-interest judgments** uncovered simulated harm despite improved genre coverage. In one exposure-loop fixture, the original top fifteen included 12 hypothetical films the person was interested in, whereas the rotated fifteen included 11. An alternate set of fictional future reactions for the very same eclectic Log also showed harm (15 down to 12).
+
+Read [Does varied discovery predict individual interest?](DISCOVER-AGAIN-INTEREST-CHECK.md). These are diagnostic counterexamples, not measured human performance. **Rotation is NOT approved for production.** The initial genre-coverage improvement must not be interpreted as a recommendation-quality win.
+
 ## Research question
 
 Can Afterlogue honor several sincere interests **across successive sets of five**, rather than compressing every part of a person's taste into the first five or repeating the same two catalog categories forever?
