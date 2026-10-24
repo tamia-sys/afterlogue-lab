@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Cinematic Evidence Pilot — Afterlogue Lab</title>
+<style>
+:root{color-scheme:dark;--bg:#191a1a;--panel:#252626;--field:#2b2c2c;--gold:#d4c19f;--line:#4c4943;--muted:#b5b0a7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f2eee6;font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:940px;margin:auto;padding:36px 20px 88px}
+h1,h2{font-family:Georgia,serif;font-weight:400}h1{font-size:clamp(35px,6vw,58px);line-height:1.12;margin:14px 0}h2{font-size:25px;margin-top:0}
+a{color:var(--gold)}.eyebrow{font-size:11px;color:var(--gold);letter-spacing:.2em;text-transform:uppercase}.muted{color:var(--muted)}
+.panel{border-top:1px solid var(--line);padding-top:24px;margin-top:32px}.notice{border-left:2px solid var(--gold);padding:12px 16px;background:var(--panel);margin:22px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.full{grid-column:1/-1}
+label{display:block;color:var(--gold);font-size:12px;margin:0 0 6px}
+input,select,textarea,button{font:inherit;background:var(--field);color:#f2eee6;border:1px solid var(--line);border-radius:4px;padding:10px 12px;width:100%}
+textarea{min-height:65px;resize:vertical}input[type=checkbox]{width:auto;accent-color:var(--gold)}
+button{width:auto;cursor:pointer}button:hover:not(:disabled){border-color:var(--gold)}button.primary{background:var(--gold);color:#1d1d1d;border-color:var(--gold)}
+button:disabled{opacity:.5;cursor:not-allowed}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px}
+.dimension{padding:12px 14px;border:1px solid var(--line);border-radius:4px}.dimension strong{font-size:13px;color:var(--gold);display:block;margin-bottom:9px}
+.dimension textarea{margin-top:9px}.check{display:flex;gap:9px;align-items:flex-start;margin:18px 0}.check label{color:inherit;font-size:13px;margin:0}
+.small{font-size:12px}.status{min-height:24px;color:var(--gold);margin:12px 0;overflow-wrap:anywhere}
+.list{display:grid;gap:9px;margin:15px 0}.saved{border:1px solid var(--line);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.saved button{font-size:12px;padding:5px 9px}.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
+.kpi{background:var(--panel);padding:14px;border-radius:4px}.kpi strong{display:block;font-size:24px;font-family:Georgia,serif;font-weight:400}
+table{border-collapse:collapse;width:100%;font-size:12px;margin:12px 0}th,td{text-align:left;border-bottom:1px solid var(--line);padding:9px 6px}th{color:var(--gold)}
+@media(max-width:650px){.grid,.kpis{grid-template-columns:1fr}main{padding:25px 16px 60px}}
+</style>
+</head>
+<body><main>
+<a href="index.html">← Recommendation Lab</a>
+<div class="eyebrow" style="margin-top:24px">Afterlogue / Research only / 04</div>
+<h1>Cinematic evidence pilot.</h1>
+<p class="muted">A small optional 12-film slate for independently authored notes about storytelling and cinematic form. Instead of treating TMDB tags as film criticism, this experiment records what a reviewer has actually observed.</p>
+<div class="notice"><strong>Offline by design.</strong> This page makes no catalog, account or analytics requests. Your notes stay in this browser's temporary memory until you choose to export a JSON file. They are not saved automatically, sent to Afterlogue, or used to change recommendations. Only note films you have genuinely watched.</div>
+<section class="panel" aria-labelledby="author-heading">
+<h2 id="author-heading">01 — Original viewing observations</h2>
+<div class="grid">
+<div><label for="reviewer">Pseudonymous reviewer code (not your name/email)</label><input id="reviewer" type="text" maxlength="80" placeholder="reviewer-01" autocomplete="off"></div>
+<div><label for="film">Film you've watched</label><select id="film"></select></div>
+<div><label for="review-date">Date of review</label><input id="review-date" type="date"></div>
+</div>
+<p class="muted small">The film list contains titles only—no pre-filled opinions or inferred pacing. Unknown dimensions are allowed. Aim for two or three thoughtfully supported observations per film rather than filling every field.</p>
+<div id="dimensions" class="grid"></div>
+<div class="check"><input type="checkbox" id="attest"><label for="attest">I personally watched this film and wrote these observations myself. I am not copying an external review or deriving them from catalog keywords.</label></div>
+<div class="actions">
+<button type="button" class="primary" id="save">Add reviewed film</button>
+<button type="button" id="export" disabled>Export my notes as JSON</button>
+<button type="button" id="reset">Clear session</button>
+</div>
+<div id="author-status" class="status" aria-live="polite"></div>
+<div id="saved" class="list"></div>
+</section>
+<section class="panel" aria-labelledby="compare-heading">
+<h2 id="compare-heading">02 — Compare independent reviewers</h2>
+<p class="muted">Have a second reviewer complete their own notes <em>before</em> they see another reviewer's file. Then import their separate JSON exports here. This is a suggested blind workflow, not a technically enforced blind study.</p>
+<label for="files">Independent reviewer exports (2–6 files, maximum 500 KB each)</label>
+<input id="files" type="file" accept=".json,application/json" multiple>
+<div class="actions"><button class="primary" id="compare" type="button">Compare observations</button><button id="export-summary" disabled type="button">Export aggregate-only report</button></div>
+<div id="compare-status" class="status" aria-live="polite"></div>
+<div id="summary" aria-live="polite"></div>
+<p class="muted small">Agreement only means two people chose the same descriptive labels. It does <strong>not</strong> prove the label is objectively correct, or that someone will enjoy the film. Disagreements remain unresolved; no majority label is forced.</p>
+</section>
+<section class="panel"><h2>What happens after the pilot?</h2>
+<p class="muted">We compare reviewer consistency and missing information first. Only then could we investigate whether descriptions of genuinely unfamiliar films help predict a viewer's voluntary interest—under appropriate licensing and privacy safeguards. Nothing here changes Afterlogue's actual recommendations.</p></section>
+</main>
+<script src="editorial-evidence.js?v=editorial-2"></script>
+<script src="editorial-pilot.js?v=pilot-1"></script>
+<script>
+(()=>{
+"use strict";
+const evidence=window.AfterlogueEditorialEvidence,pilot=window.AfterlogueEditorialPilot;
+const $=id=>document.getElementById(id);
+const fields=[
+ ["pacing","Pacing"],["narrativeStructure","Narrative structure"],
+ ["visualApproach","Visual approach"],["performanceMode","Performance style"],
+ ["dialogueDensity","Dialogue density"],["emotionalRegister","Emotional register"]
+];
+const saved=new Map();let summary=null;
+function status(id,message){$(id).textContent=message}
+function download(name,obj){
+ const blob=new Blob([JSON.stringify(obj,null,2)+"\n"],{type:"application/json"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+const today=new Date();$("review-date").value=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+for(const film of pilot.slate){
+ const option=document.createElement("option");option.value=film.key;option.textContent=film.title;
+ $("film").append(option);
+}
+for(const [key,title] of fields){
+ const box=document.createElement("div");box.className="dimension";
+ const heading=document.createElement("strong");heading.textContent=title;box.append(heading);
+ const label=document.createElement("label");label.htmlFor="facet-"+key;label.textContent="Observed quality";box.append(label);
+ const select=document.createElement("select");select.id="facet-"+key;
+ const none=document.createElement("option");none.value="";none.textContent="Unknown / not observed";select.append(none);
+ for(const allowed of evidence.dimensions[key]){
+  const option=document.createElement("option");option.value=allowed;
+  option.textContent=allowed.replaceAll("-"," ");select.append(option);
+ }
+ box.append(select);
+ const why=document.createElement("label");why.htmlFor="why-"+key;why.textContent="Your original observation (required if selected)";why.style.marginTop="12px";box.append(why);
+ const note=document.createElement("textarea");note.id="why-"+key;note.maxLength=280;
+ note.placeholder="Describe what you actually noticed, in your own words (12–280 characters).";
+ box.append(note);
+ $("dimensions").append(box);
+}
+function clearFacets(){
+ for(const [key] of fields){$("facet-"+key).value="";$("why-"+key).value=""}
+ $("attest").checked=false;
+}
+function refreshSaved(){
+ $("saved").replaceChildren();
+ $("export").disabled=saved.size===0;
+ if(!saved.size){const p=document.createElement("p");p.className="muted";p.textContent="No reviewed films added in this session."; $("saved").append(p);return}
+ const films=new Map(pilot.slate.map(x=>[x.key,x.title]));
+ for(const [key,record] of saved){
+  const row=document.createElement("div");row.className="saved";
+  const info=document.createElement("span");info.textContent=films.get(key)+" · "+Object.keys(record.observations).length+" observed dimensions";
+  const remove=document.createElement("button");remove.type="button";remove.textContent="Remove";
+  remove.addEventListener("click",()=>{saved.delete(key);refreshSaved()});
+  row.append(info,remove);$("saved").append(row);
+ }
+}
+$("save").addEventListener("click",()=>{
+ try{
+  const reviewerCode=$("reviewer").value.trim();
+  const filmKey=$("film").value;
+  if(saved.size&&[...saved.values()].some(x=>x.provenance.reviewerCode!==reviewerCode))
+   throw Error("This session already contains a different reviewer. Export or clear those notes first.");
+  if(!$("attest").checked)throw Error("Please confirm this is your firsthand review. Don't guess from a synopsis.");
+  const observations={};
+  for(const [key] of fields){
+   const value=$("facet-"+key).value,originalRationale=$("why-"+key).value.trim();
+   if(!value&&originalRationale)throw Error("Select a value for "+key+" or clear its note.");
+   if(value)observations[key]={value,originalRationale};
+  }
+  const record={filmKey,reviewStatus:"reviewed",
+   provenance:{sourceType:"firsthand-screening-notes",reviewerCode,reviewedOn:$("review-date").value},
+   observations};
+  const parsed=evidence.parse(record);
+  if(!parsed.accepted)throw Error("Cannot accept this observation: "+parsed.reason);
+  if(saved.has(filmKey))throw Error("This film already has a review in this session. Remove it before replacing.");
+  saved.set(filmKey,record);clearFacets();refreshSaved();
+  status("author-status","Added one independently authored film observation. Export before closing this page.");
+ }catch(err){status("author-status",String(err.message||err))}
+});
+$("export").addEventListener("click",()=>{
+ try{
+  const code=$("reviewer").value.trim();
+  const packet=pilot.makePacket({reviewerCode:code,records:[...saved.values()],editorialEvidence:evidence});
+  download("afterlogue-original-notes-"+code+".json",packet);
+  status("author-status","Export created locally. No film notes were uploaded.");
+ }catch(err){status("author-status",String(err.message||err))}
+});
+$("reset").addEventListener("click",()=>{
+ if(saved.size&&!confirm("Discard all unsaved reviews from this browser session?"))return;
+ saved.clear();clearFacets();refreshSaved();status("author-status","Session cleared. Nothing was stored online.");
+});
+$("compare").addEventListener("click",async()=>{
+ const files=[...$("files").files];
+ if(files.length<2||files.length>6){status("compare-status","Choose 2–6 separate reviewer exports.");return}
+ if(files.some(file=>file.size>500000)){status("compare-status","Each reviewer export must be smaller than 500 KB.");return}
+ try{
+  const packets=await Promise.all(files.map(async file=>JSON.parse(await file.text())));
+  summary=pilot.compare({packets,editorialEvidence:evidence});
+  $("summary").replaceChildren();
+  const kpis=document.createElement("div");kpis.className="kpis";
+  for(const [value,title] of [
+   [summary.reviewedFilmCount+" / "+summary.slateCount,"Films with any reviewed note"],
+   [summary.filmsWithTwoOrMoreReviews,"Films with independent overlap"],
+   [summary.observedPairAgreement===null?"—":Math.round(summary.observedPairAgreement*100)+"%","Observed label agreement"]]){
+   const box=document.createElement("div");box.className="kpi";
+   const n=document.createElement("strong");n.textContent=value;
+   const l=document.createElement("span");l.className="muted";l.textContent=title;
+   box.append(n,l);kpis.append(box);
+  }
+  $("summary").append(kpis);
+  const paragraph=document.createElement("p");paragraph.className="muted small";
+  paragraph.textContent=summary.filmsWithDisagreements+" films have at least one disagreement. "+
+   summary.packetErrors+" invalid/duplicate reviewer packets; "+
+   summary.recordErrors+" rejected film records. Missing values were never treated as disagreements.";
+  $("summary").append(paragraph);
+  const table=document.createElement("table");
+  const head=document.createElement("tr");
+  for(const text of ["Dimension","Compared","Agreed","Disagreed","Missing in paired film"]){
+   const th=document.createElement("th");th.textContent=text;head.append(th);
+  }
+  table.append(head);
+  for(const [key,label] of fields){
+   const data=summary.dimensions[key],tr=document.createElement("tr");
+   for(const value of [label,data.compared,data.agreed,data.disagreed,data.missing]){
+    const cell=document.createElement("td");cell.textContent=String(value);tr.append(cell);
+   }
+   table.append(tr);
+  }
+  $("summary").append(table);$("export-summary").disabled=false;
+  status("compare-status","Compared reviewer exports entirely in this browser. Only aggregate counts appear below.");
+ }catch(err){
+  summary=null;$("export-summary").disabled=true;$("summary").replaceChildren();
+  status("compare-status","Unable to compare the selected files: "+String(err.message||err));
+ }
+});
+$("export-summary").addEventListener("click",()=>{
+ if(!summary)return;
+ download("afterlogue-editorial-pilot-aggregate.json",summary);
+ status("compare-status","Aggregate-only report exported locally. It contains no film titles or review text.");
+});
+refreshSaved();
+})();
+</script>
+</body></html>
