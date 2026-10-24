@@ -18,8 +18,10 @@
    unique.add(item.key);
    if(rated.has(item.key)||shown.has(item.key)||decided.has(item.key))continue;
    if(allowed&&!allowed.has(item.key))continue;
-   if(!(Number(item.score)>0)||item.personalized!==true||!Array.isArray(item.matched)||!item.matched.length)continue;
-   if(!(Number(item.cinematicSignalCount)>=1))continue;
+   if(!(Number(item.score)>0)||!(Number(item.cinematicSignalCount)>=1))continue;
+   const engineMatch=item.personalized===true&&Array.isArray(item.matched)&&item.matched.length>0;
+   const independentMatch=item.cinematicIndependent===true&&Number(item.cinematicAnchorCount)>=1;
+   if(!engineMatch&&!independentMatch)continue;
    result.push(item);
   }
   return result;
