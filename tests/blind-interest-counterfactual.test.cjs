@@ -30,6 +30,8 @@ test('the exact same eclectic Log can lead to very different held-out reactions'
  assert.equal(open.baseline.shown,15);
  assert.equal(open.rotated.shown,15);
  assert.equal(open.verdict,'insufficient-heldout-evidence');
+ assert.ok(open.swapNetPossibleRange.minimum>0);
+ assert.equal(open.releaseReadiness,'NOT_VALIDATED_FOR_PRODUCTION');
  assert.equal(selective.verdict,'simulated-harm');
  assert.ok(selective.swapNetDifference<0);
  assert.equal(plan.aggregate.shadowCoverage.recognizedTasteLanes,5);
@@ -71,6 +73,8 @@ test('absence of target reactions never produces false evidence of improvement',
  assert.equal(out.swapNetDifference,null);
  assert.equal(out.baseline.minPossibleNet,-15);
  assert.equal(out.baseline.maxPossibleNet,15);
+ assert.equal(out.swapNetPossibleRange.minimum,-30);
+ assert.equal(out.swapNetPossibleRange.maximum,30);
  assert.equal(out.rotated.interested,0);
 });
 test('small complete interest samples can be judged only as simulated comparisons, never accuracy',()=>{
