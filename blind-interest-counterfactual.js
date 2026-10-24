@@ -61,6 +61,8 @@
   const labeledSwaps=addedResults.decisiveVotes===added.length&&
    displacedResults.decisiveVotes===displaced.length;
   const delta=addedResults.netPreference-displacedResults.netPreference;
+  const minimumSwapNet=addedResults.minPossibleNet-displacedResults.maxPossibleNet;
+  const maximumSwapNet=addedResults.maxPossibleNet-displacedResults.minPossibleNet;
   // Pairwise preference difference is exactly determined only if every
   // replacement and displaced item had a decisive fictional vote.
   const verdict=added.length===0?"identical":
@@ -77,7 +79,9 @@
    displacedTitles:displaced.length,
    baseline,rotated,addedResults,displacedResults,roundSummaries,
    swapNetDifference:labeledSwaps?delta:null,
+   swapNetPossibleRange:{minimum:minimumSwapNet,maximum:maximumSwapNet},
    verdict,minimumDecisiveVotes:minObserved,
+   releaseReadiness:"NOT_VALIDATED_FOR_PRODUCTION",
    note:"Fictional prospective-interest votes ONLY, authored separately from film ranker. Missing/Unsure is never a dislike. It is not accuracy, human preference, watched enjoyment, or evidence for production score changes. Aggregate only; no per-film outcomes are returned."
   });
  }
