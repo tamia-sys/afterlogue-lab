@@ -73,8 +73,8 @@ test('absence of target reactions never produces false evidence of improvement',
  assert.equal(out.swapNetDifference,null);
  assert.equal(out.baseline.minPossibleNet,-15);
  assert.equal(out.baseline.maxPossibleNet,15);
- assert.equal(out.swapNetPossibleRange.minimum,-30);
- assert.equal(out.swapNetPossibleRange.maximum,30);
+ assert.equal(out.swapNetPossibleRange.minimum,-6);
+ assert.equal(out.swapNetPossibleRange.maximum,6);
  assert.equal(out.rotated.interested,0);
 });
 test('small complete interest samples can be judged only as simulated comparisons, never accuracy',()=>{
