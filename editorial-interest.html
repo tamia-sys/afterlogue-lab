@@ -48,7 +48,7 @@ label{display:block;color:var(--gold);font-size:12px;margin:12px 0 6px}
 </div>
 <div class="check"><input type="checkbox" id="anchor-attest"><label for="anchor-attest">I have watched both anchor films, and I'm giving an honest positive and negative impression. I am not one of the two reviewers.</label></div>
 <h2 style="margin-top:28px">03 — Before seeing any prediction</h2>
-<p class="muted">Only answer for films you have <strong>not watched</strong>. Leave others at “No response.” “Unsure” is a valid response. No synopsis or film-style label will be shown to influence your choice.</p>
+<p class="muted">Only answer for films you have <strong>not watched</strong>. Confirm “I have not watched this film” for each title before choosing a response; otherwise it will be omitted. “Unsure” is valid. Unreviewed titles remain in the list so missing evidence produces an honest abstention. No synopsis or film-style label is shown to influence your choice.</p>
 <div id="target-list"></div>
 <div class="actions"><button id="evaluate" type="button" class="primary">Evaluate my recorded interest</button><button id="clear" type="button">Clear survey answers</button></div>
 <p id="survey-status" class="status" role="status" aria-live="polite"></p>
@@ -79,26 +79,38 @@ function option(key,title){const o=document.createElement("option");o.value=key;
 function renderSurvey(){
  $("positive").replaceChildren();$("negative").replaceChildren();$("target-list").replaceChildren();
  const options=consensus.films.filter(x=>x.usable);
+ if(options.length<2){$("survey").classList.add("hidden");return false}
  for(const x of options){$("positive").append(option(x.key,slate.get(x.key)));$("negative").append(option(x.key,slate.get(x.key)))}
- if(options.length>1)$("negative").selectedIndex=1;
- for(const x of options){
+ $("negative").selectedIndex=1;
+ for(const x of consensus.films){
   const row=document.createElement("div");row.className="target";row.dataset.filmKey=x.key;
-  const label=document.createElement("label");label.htmlFor="vote-"+x.key;label.textContent=slate.get(x.key);
+  const left=document.createElement("div");
+  const title=document.createElement("div");title.textContent=slate.get(x.key);
+  const check=document.createElement("input");check.type="checkbox";check.id="unseen-"+x.key;
+  const checkLabel=document.createElement("label");checkLabel.htmlFor=check.id;
+  checkLabel.textContent="I have not watched this film";checkLabel.style.display="inline";
+  left.append(title,check,checkLabel);
   const select=document.createElement("select");select.id="vote-"+x.key;
-  for(const [v,text] of [["","No response / already watched"],["Interested","Interested in watching"],
+  select.setAttribute("aria-label","Interest in "+slate.get(x.key));
+  select.disabled=true;
+  for(const [v,text] of [["","No response"],["Interested","Interested in watching"],
     ["Not drawn to it","Not drawn to watching"],["Unsure","Unsure"]])select.append(option(v,text));
+  check.addEventListener("change",()=>{
+   select.disabled=!check.checked;if(!check.checked)select.value="";invalidate();
+  });
   select.addEventListener("change",invalidate);
-  row.append(label,select);$("target-list").append(row);
+  row.append(left,select);$("target-list").append(row);
  }
- updateTargets();$("survey").classList.remove("hidden");
+ updateTargets();$("survey").classList.remove("hidden");return true;
 }
 function updateTargets(){
  const excluded=new Set([$("positive").value,$("negative").value]);
  for(const row of $("target-list").children){
   const hide=excluded.has(row.dataset.filmKey);
   row.classList.toggle("hidden",hide);
-  const select=row.querySelector("select");
-  if(hide)select.value="";
+  const select=row.querySelector("select"),check=row.querySelector('input[type="checkbox"]');
+  if(hide){select.value="";select.disabled=true;check.checked=false}
+  else select.disabled=!check.checked;
  }
  invalidate();
 }
@@ -113,9 +125,12 @@ $("load").addEventListener("click",async()=>{
   const result=consensusAudit.compare({packets,editorialEvidence:evidence,pilot});
   if(!result.ready)throw Error("Cannot use reviewer exports: "+result.reason);
   consensus=result;
-  renderSurvey();
+  const ready=renderSurvey();
   status("load-status",result.summary.jointlyReviewedFilms+" films reviewed by both contributors; "+
-   result.summary.filmsWithTwoOrMoreAgreedDimensions+" have two or more jointly agreed observations. No notes uploaded.");
+   result.summary.filmsWithTwoOrMoreAgreedDimensions+" have at least two conflict-free agreed dimensions. "+
+   (ready?"All twelve slate films remain eligible for interest responses; absent evidence will trigger abstention.":
+   "At least two reliably described films are needed to choose positive and negative anchors.")+
+   " No notes uploaded.");
   status("survey-status","");
  }catch(err){status("load-status","Unable to read independent notes: "+String(err.message||err))}
 });
@@ -127,7 +142,8 @@ $("evaluate").addEventListener("click",()=>{
  if($("positive").value===$("negative").value){status("survey-status","Choose two different watched films as anchors.");return}
  const anchors=[{key:$("positive").value,impression:"Loved"},
   {key:$("negative").value,impression:"Not for me"}];
- const targets=[...$("target-list").children].filter(row=>!row.classList.contains("hidden"))
+ const targets=[...$("target-list").children]
+  .filter(row=>!row.classList.contains("hidden")&&row.querySelector('input[type="checkbox"]').checked)
   .map(row=>({key:row.dataset.filmKey,interest:row.querySelector("select").value}))
   .filter(x=>x.interest);
  if(!targets.length){status("survey-status","Select an interest response for at least one unseen film, or leave this survey incomplete.");return}
@@ -151,7 +167,10 @@ $("evaluate").addEventListener("click",()=>{
  status("survey-status","The interest hypotheses have been assessed in aggregate. Individual film predictions are never revealed in this pilot.");
 });
 $("clear").addEventListener("click",()=>{
- for(const row of $("target-list").children)row.querySelector("select").value="";
+ for(const row of $("target-list").children){
+  row.querySelector("select").value="";row.querySelector("select").disabled=true;
+  row.querySelector('input[type="checkbox"]').checked=false;
+ }
  $("anchor-attest").checked=false;invalidate();status("survey-status","Interest responses cleared from this page.");
 });
 $("export").addEventListener("click",()=>{
