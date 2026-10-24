@@ -1,0 +1,34 @@
+name: Bounded public-catalog fingerprint validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/real-catalog-smoke.yml
+      - tests/real-catalog-smoke.cjs
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: afterlogue-real-catalog-smoke
+  cancel-in-progress: false
+jobs:
+  catalog-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate no-credentials catalog runner with fictional fixtures
+        run: node --test tests/real-catalog-smoke.test.cjs
+      - name: Verify public film-catalog metadata on two fictional viewers
+        run: node tests/real-catalog-smoke.cjs --profiles 2 --candidates 24 --plans 1 --output reports/real-catalog-smoke.json
+      - name: Upload aggregate-only diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-catalog-smoke-summary
+          path: reports/real-catalog-smoke.json
+          if-no-files-found: ignore
+          retention-days: 2
