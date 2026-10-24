@@ -53,8 +53,8 @@ test('negative ratings remain contrasts and do not require community tags',()=>{
  assert.equal(without.testedNegative,0);
  assert.equal(without.comparableHeldoutPairs,0);
  assert.equal(without.scoreOrderingRatio,null);
- const noCommunityInputsPresent=!JSON.stringify(without).includes('community');
- assert.equal(noCommunityInputsPresent,false); // caveat explicitly discloses community independence
+ // This module accepts rated Log histories, not any social or community signals.
+ assert.equal(Object.keys(qa).includes('community'),false);
 });
 test('not enough individually rated positives means honest abstention',()=>{
  const result=qa.evaluate({engine,entries:sources,impressions:{
