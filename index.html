@@ -220,6 +220,9 @@ async function generate(){
  }
  allRanked=cinematicRerank(ranked);
  pool=feedbackAdjustedPool();
+ const initialQualified=allRanked.filter(x=>x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
+ track("pipeline_audit",{payload:{retrieval_round:0,candidatePool:candidateMap.size,evaluated:candidates.length,deferred:initialDeferred,metadata:metadata.size,ranked:allRanked.length,verifiedCinematic:initialQualified.length,balanced:pool.length,selected:Math.min(5,pool.length),source:"initial_mixed"}});
+ $("retrieval-audit").textContent+=" · "+initialQualified.length+" verified cinematic matches · "+pool.length+" qualified";
  const excluded=new Set(source.map(x=>x.key));pool=pool.filter(x=>!excluded.has(x.key));
  $("stats").textContent="Verified Log: "+found.length+"/"+logged.length+" · Candidates: "+candidates.length+" · Enriched: "+metadata.size+" · Qualified: "+pool.length;
  showNext();if(pool.length<5)setStatus("Only "+pool.length+" qualified titles found in this bounded sample; no filler invented.");
