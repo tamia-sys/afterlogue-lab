@@ -493,6 +493,9 @@ function showNext(override=null){
   " · TMDB theme labels: "+(item.facets.themes.join(", ")||"none")+
   " · tone labels: "+(item.facets.tones.join(", ")||"none")+
   " · verified directors: "+item.facets.directors.length+
+  " · plot-description topics: "+((item.facets.narrativeThemes||[]).join(", ")||"none")+
+  " · plot-only evidence: "+(item.cinematicSynopsisOnly?"yes (not verified style)":"no")+
+  " · recovered from legacy penalty: "+(item.cinematicSynopsisRecovered?"yes":"no")+
   " · linked sources: "+(top||"none");
  audit.append(summary,detail);
  const feedback=document.createElement("div");feedback.className="feedback";
@@ -567,6 +570,7 @@ function exportDiagnosticSnapshot(){
   cinematicEvidenceKindCount:x.cinematicEvidenceKindCount||0,
   cinematicSynopsisOnly:Boolean(x.cinematicSynopsisOnly),
   cinematicIndependent:Boolean(x.cinematicIndependent),
+  cinematicSynopsisRecovered:Boolean(x.cinematicSynopsisRecovered),
   cinematicNegativePenalty:x.cinematicNegativePenalty||0,
   cinematicExplanation:x.cinematicExplanation||"",
   eligible:eligibility.eligible([x],{ratedKeys:Object.keys(ratingSignals)}).length>0,
