@@ -7,6 +7,8 @@
 })(typeof globalThis!=="undefined"?globalThis:null,function(){
  "use strict";
  const broad=new Set(["identity","family","control","belonging","survival","love","friendship","loss","growing-up","drama","relationships","coming-of-age"]);
+ // Treat weakly sourced catalog traits as hints, not definitive taste evidence.
+ const hasEvidence=(x)=>Array.isArray(x)&&x.length>0;
  const overlap=(a,b)=>(a||[]).filter(v=>(b||[]).includes(v));
  function compare(candidate,source,rating="Loved"){
   const f=candidate.facets||{},g=source.facets||{};
@@ -15,7 +17,7 @@
   const directors=overlap(f.directors,g.directors);
   const writers=overlap(f.writers,g.writers);
   const pace=Boolean(f.pace&&g.pace&&f.pace===g.pace);
-  const types=Number(tones.length>0)+Number(themes.length>0)+Number(directors.length+writers.length>0)+Number(pace);
+  const types=Number(hasEvidence(tones))+Number(hasEvidence(themes))+Number(directors.length+writers.length>0)+Number(pace);
   const score=Math.min(2,tones.length)*1.8+Math.min(2,themes.length)*1.5+
    Math.min(1,directors.length)*2+Math.min(1,writers.length)*1.2+(pace?1:0)+(types>=2?1.1:0);
   const details=[...directors.slice(0,1).map(x=>({type:"director",value:x})),
