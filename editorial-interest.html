@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Blind Interest Pilot — Afterlogue Lab</title>
+<style>
+:root{color-scheme:dark;--bg:#191a1a;--panel:#262626;--line:#49453f;--gold:#d4c19f;--muted:#b2aca2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f0ece6;font:14px/1.58 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:940px;margin:auto;padding:36px 22px 80px}
+h1,h2{font:400 43px/1.16 Georgia,serif;margin:16px 0}h2{font-size:26px;margin:0 0 12px}
+a{color:var(--gold)}.eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.muted{color:var(--muted)}.notice{border-left:2px solid var(--gold);padding:13px 17px;background:var(--panel);margin:24px 0}
+section{border-top:1px solid var(--line);margin-top:30px;padding-top:27px}
+select,input[type=file],button{background:#292929;border:1px solid var(--line);border-radius:4px;color:inherit;padding:11px 13px;font:inherit}
+select,input[type=file]{width:100%}button{cursor:pointer}button.primary{background:var(--gold);color:#191a1a}
+button:disabled{opacity:.45;cursor:not-allowed}button:hover:not(:disabled){border-color:var(--gold)}
+label{display:block;color:var(--gold);font-size:12px;margin:12px 0 6px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.card{background:var(--panel);padding:14px;border-radius:4px}
+.check{display:flex;gap:8px;align-items:flex-start;margin:16px 0}.check label{margin:0;color:inherit;font-size:13px}.check input{margin-top:4px;accent-color:var(--gold)}
+.target{display:grid;grid-template-columns:1fr minmax(160px,210px);align-items:center;gap:13px;border-bottom:1px solid var(--line);padding:10px 0}
+.target label{color:inherit;font-size:13px;margin:0}.status{color:var(--gold);min-height:24px;margin:10px 0}.hidden{display:none}
+.result{background:var(--panel);padding:14px 16px;margin:14px 0}.count{font:400 28px Georgia,serif}
+@media(max-width:600px){.grid,.target{grid-template-columns:1fr}main{padding:24px 16px 60px}h1{font-size:36px}}
+</style>
+</head>
+<body><main>
+<a href="editorial-pilot.html">← Cinematic evidence pilot</a>
+<div class="eyebrow" style="margin-top:24px">Afterlogue / Research / 05</div>
+<h1>Interest, before prediction.</h1>
+<p class="muted">Can a film's independently reviewed cinematic qualities give Afterlogue a useful hint about a person's interest? This research form keeps the hypothetical prediction hidden until you have entered your own interest choices.</p>
+<div class="notice"><strong>Entirely offline.</strong> Nothing is sent to Afterlogue or saved automatically. Both reviewers' private note files are processed in your browser memory. The only export is an aggregate summary without film titles, individual interest choices, reviewer identities or notes. This is a research instrument—not the Home recommendation engine.</div>
+<section>
+<h2>01 — Load two independent film reviews</h2>
+<p class="muted">Ask two different reviewers to complete the <a href="editorial-pilot.html">original film-notes pilot</a> independently. Import their JSON files below. Only matching observations from two reviewers count.</p>
+<label for="review-files">Exactly two separate reviewer exports (500 KB maximum each)</label>
+<input id="review-files" type="file" accept=".json,application/json" multiple>
+<div class="actions"><button id="load" class="primary" type="button">Compare independent notes</button></div>
+<p id="load-status" class="status" role="status" aria-live="polite">No reviewer notes loaded.</p>
+</section>
+<section id="survey" class="hidden">
+<h2>02 — Your own viewing perspective</h2>
+<p class="muted">This part is for someone who <strong>did not author either review</strong>. Select one film you've watched and liked, and another you've watched but disliked. For the remaining films you <strong>haven't watched</strong>, say whether you're drawn to watching them. This measures interest, not enjoyment after watching.</p>
+<div class="grid">
+<div><label for="positive">A film you actually watched and liked</label><select id="positive"></select></div>
+<div><label for="negative">A film you actually watched but disliked</label><select id="negative"></select></div>
+</div>
+<div class="check"><input type="checkbox" id="anchor-attest"><label for="anchor-attest">I have watched both anchor films, and I'm giving an honest positive and negative impression. I am not one of the two reviewers.</label></div>
+<h2 style="margin-top:28px">03 — Before seeing any prediction</h2>
+<p class="muted">Only answer for films you have <strong>not watched</strong>. Leave others at “No response.” “Unsure” is a valid response. No synopsis or film-style label will be shown to influence your choice.</p>
+<div id="target-list"></div>
+<div class="actions"><button id="evaluate" type="button" class="primary">Evaluate my recorded interest</button><button id="clear" type="button">Clear survey answers</button></div>
+<p id="survey-status" class="status" role="status" aria-live="polite"></p>
+</section>
+<section id="results-section" class="hidden">
+<h2>04 — Aggregate-only research result</h2>
+<div id="results"></div>
+<p class="muted">This is not accuracy, precision or proof of viewer preference. The study is tiny, self-selected and based on subjective labels. A mismatch does not mean someone is wrong; abstention means the evidence isn't sufficient.</p>
+<button id="export" type="button">Export aggregate-only JSON</button>
+</section>
+<script src="editorial-evidence.js?v=editorial-2"></script>
+<script src="editorial-pilot.js?v=pilot-2"></script>
+<script src="editorial-consensus.js?v=consensus-1"></script>
+<script src="editorial-interest-holdout.js?v=interest-holdout-1"></script>
+<script>
+(()=>{
+"use strict";
+const evidence=window.AfterlogueEditorialEvidence,pilot=window.AfterlogueEditorialPilot,
+ consensusAudit=window.AfterlogueEditorialConsensus,interest=window.AfterlogueInterestHoldout;
+const $=id=>document.getElementById(id);
+const slate=new Map(pilot.slate.map(f=>[f.key,f.title]));
+let consensus=null,report=null;
+function status(id,text){$(id).textContent=text}
+function invalidate(){
+ report=null;$("results").replaceChildren();$("results-section").classList.add("hidden");
+}
+function option(key,title){const o=document.createElement("option");o.value=key;o.textContent=title;return o}
+function renderSurvey(){
+ $("positive").replaceChildren();$("negative").replaceChildren();$("target-list").replaceChildren();
+ const options=consensus.films.filter(x=>x.usable);
+ for(const x of options){$("positive").append(option(x.key,slate.get(x.key)));$("negative").append(option(x.key,slate.get(x.key)))}
+ if(options.length>1)$("negative").selectedIndex=1;
+ for(const x of options){
+  const row=document.createElement("div");row.className="target";row.dataset.filmKey=x.key;
+  const label=document.createElement("label");label.htmlFor="vote-"+x.key;label.textContent=slate.get(x.key);
+  const select=document.createElement("select");select.id="vote-"+x.key;
+  for(const [v,text] of [["","No response / already watched"],["Interested","Interested in watching"],
+    ["Not drawn to it","Not drawn to watching"],["Unsure","Unsure"]])select.append(option(v,text));
+  select.addEventListener("change",invalidate);
+  row.append(label,select);$("target-list").append(row);
+ }
+ updateTargets();$("survey").classList.remove("hidden");
+}
+function updateTargets(){
+ const excluded=new Set([$("positive").value,$("negative").value]);
+ for(const row of $("target-list").children){
+  const hide=excluded.has(row.dataset.filmKey);
+  row.classList.toggle("hidden",hide);
+  const select=row.querySelector("select");
+  if(hide)select.value="";
+ }
+ invalidate();
+}
+$("load").addEventListener("click",async()=>{
+ $("survey").classList.add("hidden");invalidate();consensus=null;
+ const files=[...$("review-files").files];
+ if(files.length!==2||files.some(x=>x.size>500000)){
+  status("load-status","Choose exactly two independent JSON exports, under 500 KB each.");return
+ }
+ try{
+  const packets=await Promise.all(files.map(async file=>JSON.parse(await file.text())));
+  const result=consensusAudit.compare({packets,editorialEvidence:evidence,pilot});
+  if(!result.ready)throw Error("Cannot use reviewer exports: "+result.reason);
+  consensus=result;
+  renderSurvey();
+  status("load-status",result.summary.jointlyReviewedFilms+" films reviewed by both contributors; "+
+   result.summary.filmsWithTwoOrMoreAgreedDimensions+" have two or more jointly agreed observations. No notes uploaded.");
+  status("survey-status","");
+ }catch(err){status("load-status","Unable to read independent notes: "+String(err.message||err))}
+});
+for(const id of ["positive","negative"]){$(id).addEventListener("change",updateTargets)}
+$("anchor-attest").addEventListener("change",invalidate);
+$("evaluate").addEventListener("click",()=>{
+ invalidate();
+ if(!consensus||!$("anchor-attest").checked){status("survey-status","Confirm that you've watched both anchor films and aren't one of the reviewers.");return}
+ if($("positive").value===$("negative").value){status("survey-status","Choose two different watched films as anchors.");return}
+ const anchors=[{key:$("positive").value,impression:"Loved"},
+  {key:$("negative").value,impression:"Not for me"}];
+ const targets=[...$("target-list").children].filter(row=>!row.classList.contains("hidden"))
+  .map(row=>({key:row.dataset.filmKey,interest:row.querySelector("select").value}))
+  .filter(x=>x.interest);
+ if(!targets.length){status("survey-status","Select an interest response for at least one unseen film, or leave this survey incomplete.");return}
+ const outcome=interest.evaluate({consensus,anchors,targets});
+ if(!outcome.ready){status("survey-status","Research evaluation unavailable: "+outcome.reason);return}
+ report=outcome;
+ const numbers=[
+  [report.holdoutTargets,"Unseen titles with responses"],
+  [report.hypothesesMade,"Cautious interest hypotheses"],
+  [report.abstentions,"Insufficient or conflicting evidence"],
+  [report.hypotheticalInterestVotes,"Hypotheses with an interested response"],
+  [report.hypotheticalNotDrawnVotes,"Hypotheses with a not-drawn response"]
+ ];
+ for(const [value,label] of numbers){
+  const box=document.createElement("div");box.className="result";
+  const figure=document.createElement("div");figure.className="count";figure.textContent=String(value);
+  const caption=document.createElement("div");caption.className="muted";caption.textContent=label;
+  box.append(figure,caption);$("results").append(box);
+ }
+ $("results-section").classList.remove("hidden");
+ status("survey-status","The interest hypotheses have been assessed in aggregate. Individual film predictions are never revealed in this pilot.");
+});
+$("clear").addEventListener("click",()=>{
+ for(const row of $("target-list").children)row.querySelector("select").value="";
+ $("anchor-attest").checked=false;invalidate();status("survey-status","Interest responses cleared from this page.");
+});
+$("export").addEventListener("click",()=>{
+ if(!report)return;
+ const blob=new Blob([JSON.stringify(report,null,2)+"\n"],{type:"application/json"});
+ const url=URL.createObjectURL(blob),link=document.createElement("a");
+ link.href=url;link.download="afterlogue-interest-holdout-aggregate.json";
+ document.body.append(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+ status("survey-status","Aggregate-only export created locally. Your individual title responses remain private.");
+});
+})();
+</script>
+</main></body></html>
