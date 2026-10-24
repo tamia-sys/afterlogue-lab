@@ -387,7 +387,9 @@ async function retrieveNextBatch(){
   const qualified=feedbackAdjustedPool(freshKeys);
   const strongCount=qualified.filter(x=>x.cinematicSignalCount>=2).length;
   const partialCount=qualified.filter(x=>x.cinematicSignalCount===1).length;
-  const eligible=ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
+  const eligible=preBalance;
+  const synopsisOnly=preBalance.filter(x=>x.cinematicSynopsisOnly).length;
+  const independent=preBalance.filter(x=>x.cinematicIndependent&&!x.personalized).length;
   const rejected={
     fresh:enriched.length,
     backlog:pending.length,
@@ -398,13 +400,13 @@ async function retrieveNextBatch(){
     noCinematicEvidence:ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount===0).length,
     beforeBalance:preBalance.length,afterBalance:qualified.length,
     balanceRemoved:Math.max(0,preBalance.length-qualified.length),
-    multiSignal:strongCount,singleSignal:partialCount,metadata:meta.size
+    multiSignal:strongCount,singleSignal:partialCount,synopsisOnly,independent,metadata:meta.size
   };
   console.info("[Afterlogue Pipeline Audit]",rejected);
   track("pipeline_audit",{payload:{retrieval_round:retrievalRound,source:browseItems.length?"lab-browse":"fallback",provider:browse.audit||null,returned,invalid,previouslyKnown,withinRound,failed,...rejected}});
   $("retrieval-audit").textContent=summary+" · "+meta.size+" enriched · "+
-   eligible.length+" relevant · "+preBalance.length+" before balance → "+qualified.length+" after balance · "+strongCount+" multi-signal · "+partialCount+" single-signal · "+
-   "Excluded: "+rejected.lowScore+" low score, "+rejected.notPersonalized+" not personalized, "+rejected.unmatched+" unmatched, "+rejected.noCinematicEvidence+" no cinematic evidence, "+rejected.balanceRemoved+" by balancing · "+
+   eligible.length+" qualified · "+synopsisOnly+" plot-only clues · "+independent+" independently supported · "+preBalance.length+" before balance → "+qualified.length+" after balance · "+strongCount+" multi-signal · "+partialCount+" single-signal · "+
+   "Excluded: "+rejected.lowScore+" low score, "+rejected.notPersonalized+" legacy-unpersonalized, "+rejected.unmatched+" unmatched, "+rejected.noCinematicEvidence+" no cinematic evidence, "+rejected.balanceRemoved+" by balancing · "+
    Math.min(5,qualified.length)+" selected";
   if(!qualified.length){
    setStatus("Retrieval completed, but no unshown candidates passed the Log-evidence checks. No genre-only filler or repeats shown.");
