@@ -180,7 +180,16 @@ async function generate(){
   const key="tmdb-movie-"+item.id;
   if(!candidateMap.has(key)){candidateMap.set(key,item);addedBrowse++}
  }
- const candidates=[...candidateMap.values()].slice(0,120).map((x,i)=>toEntry(x,400+i));
+ const initialCandidates=[...candidateMap.values()];
+ // Give each retrieval source representation in the bounded metadata budget.
+ const titleSource=initialCandidates.filter(x=>x.matchMethod!=="lab_discover_genre");
+ const discoverSource=initialCandidates.filter(x=>x.matchMethod==="lab_discover_genre");
+ const mixed=[];
+ for(let i=0;mixed.length<120&&(i<titleSource.length||i<discoverSource.length);i++){
+  if(i<titleSource.length)mixed.push(titleSource[i]);
+  if(i<discoverSource.length&&mixed.length<120)mixed.push(discoverSource[i]);
+ }
+ const candidates=mixed.map((x,i)=>toEntry(x,400+i));
  $("retrieval-audit").textContent="Initial retrieval: "+plans.length+" title-seed plans + "+(initialBrowse.audit?.plans||0)+" Discover pages · "+candidateMap.size+" unique candidates ("+candidates.length+" evaluated; "+addedBrowse+" additional Discover films)";
  if(!candidates.length)throw Error("No verified candidate films were returned. The catalog may be temporarily unavailable.");
  setStatus("Loading verified genres, themes, and filmmaker credits...");
