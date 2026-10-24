@@ -14,7 +14,7 @@ test('offline study has no network, telemetry, browser storage or production end
  assert.doesNotMatch(html,/\blocalStorage\s*\.|\bsessionStorage\s*\.|\bindexedDB\s*\./);
  assert.doesNotMatch(html,/supabase\.co|afterlogue-catalog|sb_publishable_|\/rest\/v1\//);
  assert.match(html,/Entirely offline/);
- assert.match(html,/not saved automatically/);
+ assert.match(html,/or saved automatically/);
 });
 test('self-declared watched anchors and unseen target votes are required before evaluating',()=>{
  for(const id of ['review-files','load','load-status','survey','positive','negative','anchor-attest',
@@ -25,7 +25,7 @@ test('self-declared watched anchors and unseen target votes are required before 
  assert.match(html,/if\(\$\("positive"\)\.value===\$\("negative"\)\.value\)/);
  assert.match(html,/if\(!targets\.length\)/);
  assert.match(html,/interest\.evaluate\(\{consensus,anchors,targets\}\)/);
- assert.match(html,/I'm not one of the two reviewers/);
+ assert.match(html,/I am not one of the two reviewers/);
 });
 test('hypotheses are masked until after interest responses and results are aggregate',()=>{
  assert.match(html,/invalidate\(\);/);
