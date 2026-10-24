@@ -1,7 +1,7 @@
 # Afterlogue Lab — Does varied discovery predict individual interest?
 
 **Research checkpoint:** October 24, 2026  
-**Status:** OFFLINE, SYNTHETIC ONLY. The proposed Discover Again shelf rotation is **NOT validated for production**.
+**Status:** OFFLINE, SYNTHETIC ONLY. The proposed Discover Again shelf rotation is **NOT validated for production** and is **NOT approved for production**.
 
 ## Why this check was necessary
 
