@@ -9,6 +9,7 @@ const engine=globalThis.AfterlogueRecommendationEngine;
 const taste=require('../taste-model-v2.js');
 const policy=require('../eligibility-policy.js');
 const anchorBalance=require('../evidence-balance.js');
+const retrieval=require('./retrieval-simulator.cjs');
 
 const LANES=[
  {name:'intimate-realism',genres:['drama'],themes:['ordinary-life','connection','solitude'],tones:['intimate','reflective'],pace:'slow'},
@@ -57,10 +58,12 @@ function makePersona(index,items,{seed=1}={}){
  return {id:index,width:lanes.length,log};
 }
 function avg(rows,key){return rows.length?rows.reduce((sum,row)=>sum+row[key],0)/rows.length:0}
-function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},dependencies={}){
+function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5,
+ retrievalStrategy='balanced',candidateBudget=120}={},dependencies={}){
  assert.ok(Number.isInteger(personas)&&personas>0&&personas<=5000);
  assert.ok(Number.isInteger(perLane)&&perLane>=12&&perLane<=100);
  assert.ok(missingRate>=0&&missingRate<=.95&&shelfSize>=1&&shelfSize<=10);
+ assert.ok(Number.isInteger(candidateBudget)&&candidateBudget>=10&&candidateBudget<=500);
  const source=catalog({perLane,missingRate,seed});
  const ranker=dependencies.engine||engine,cinematic=dependencies.taste||taste,
   eligibility=dependencies.policy||policy,balancer=dependencies.anchorBalance||anchorBalance;
@@ -68,12 +71,15 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
  for(let i=0;i<personas;i++){
   const p=makePersona(i,source,{seed});
   const keys=new Set(p.log.keys()),scores=Object.fromEntries(p.log);
-  const ranked=ranker.rank({entries:source,category:'movies',impressions:scores});
-  const adjusted=cinematic.rank(ranked,source,scores);
+  const retrieved=retrieval.retrieve(source,p.log,{strategy:retrievalStrategy,
+    maxAnchors:8,perAnchor:18,limit:candidateBudget});
+  const testPool=[...source.filter(x=>keys.has(x.key)),...retrieved.items];
+  const ranked=ranker.rank({entries:testPool,category:'movies',impressions:scores});
+  const adjusted=cinematic.rank(ranked,testPool,scores);
   const valid=eligibility.eligible(adjusted,{ratedKeys:[...keys]});
   const rawShelf=valid.slice(0,shelfSize);
   // Match the Lab's real post-eligibility two-stage shelf balancing.
-  const ordered=balancer.balance(ranker.balanceShelves({entries:valid,profileEntries:source,
+  const ordered=balancer.balance(ranker.balanceShelves({entries:valid,profileEntries:testPool,
    impressions:scores,category:'movies',size:shelfSize}),shelfSize);
   const shelf1=ordered.slice(0,shelfSize),shelf2=ordered.slice(shelfSize,shelfSize*2);
   const shown=[...shelf1,...shelf2];
@@ -87,7 +93,12 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
   const firstLanes=new Set(shelf1.map(x=>x.syntheticLane));
   const firstAnchors=new Set(shelf1.map(x=>x.cinematicAnchor).filter(Boolean));
   const maxAnchor=[...firstAnchors].reduce((m,a)=>Math.max(m,shelf1.filter(x=>x.cinematicAnchor===a).length),0);
+  const likedLanes=new Set(source.filter(x=>['Loved','Liked'].includes(p.log.get(x.key))).map(x=>x.syntheticLane));
+  const retrievedLanes=new Set(retrieved.items.map(x=>x.syntheticLane));
+  const recoveredLikedLanes=[...likedLanes].filter(x=>retrievedLanes.has(x)).length;
   observations.push({width:p.width,allCandidates:source.length-keys.size,qualified:valid.length,
+   retrieved:retrieved.items.length,retrievedLanes:retrievedLanes.size,
+   positiveLaneCoverage:likedLanes.size?recoveredLikedLanes/likedLanes.size:0,
    completeFirst:Number(shelf1.length>=shelfSize),completeSecond:Number(shelf2.length>=shelfSize),
    duplicates:duplicateCount,loggedViolations:loggedCount,unsupported,
    genres:firstGenres.size,lanes:firstLanes.size,anchors:firstAnchors.size,
@@ -98,6 +109,8 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
  function summarize(rows){
   return {personas:rows.length,firstShelfCoverage:avg(rows,'completeFirst'),
    twoShelfCoverage:avg(rows,'completeSecond'),meanEligibleCandidates:avg(rows,'qualified'),
+   meanRetrievedCandidates:avg(rows,'retrieved'),meanRetrievedLanes:avg(rows,'retrievedLanes'),
+   meanPositiveTasteLaneRetrievalCoverage:avg(rows,'positiveLaneCoverage'),
    meanGenresAt5:avg(rows,'genres'),meanSyntheticLanesAt5:avg(rows,'lanes'),
    meanUnbalancedGenresAt5:avg(rows,'rawGenres'),meanUnbalancedLanesAt5:avg(rows,'rawLanes'),
    meanUnbalancedAnchorsAt5:avg(rows,'rawAnchors'),
@@ -109,8 +122,8 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
    unsupportedEligibilityViolations:rows.reduce((s,x)=>s+x.unsupported,0)};
  }
  return {format:'afterlogue-structural-stress-v1',syntheticOnly:true,
-  warning:'All films and people are fictional. These structural numbers DO NOT measure viewer satisfaction, recommendation precision, or real catalog coverage.',
-  config:{personas,perLane,missingRate,seed,shelfSize},filmCount:source.length,
+  warning:'All films and people are fictional. Retrieval emulates a provider; these numbers DO NOT measure real TMDB retrieval, human preferences, or true recommendation precision.',
+  config:{personas,perLane,missingRate,seed,shelfSize,retrievalStrategy,candidateBudget},filmCount:source.length,
   summary:summarize(observations),byTasteBreadth:Object.fromEntries([1,2,3,4].map(n=>
    [String(n),summarize(observations.filter(x=>x.width===n))])),
   metadataNote:'Every missing facet was intentionally removed; no themes or tones were invented for missing records.'};
@@ -118,11 +131,12 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
 function main(){
  const values=process.argv.slice(2),config={};
  const flags={'--personas':'personas','--per-lane':'perLane','--missing-rate':'missingRate',
-  '--seed':'seed','--shelf-size':'shelfSize'};
+  '--seed':'seed','--shelf-size':'shelfSize','--strategy':'retrievalStrategy',
+  '--budget':'candidateBudget'};
  if(values.includes('--help')){console.log('Usage: node tests/stress-personas.cjs [--personas 240] [--per-lane 24] [--missing-rate 0.25] [--seed 23]');return}
  for(let i=0;i<values.length;i+=2){
   if(!flags[values[i]]||values[i+1]==null)throw Error('Unknown or incomplete CLI flag '+values[i]);
-  config[flags[values[i]]]=Number(values[i+1]);
+  config[flags[values[i]]]=values[i]==='--strategy'?values[i+1]:Number(values[i+1]);
  }
  const report=run(config);console.log(JSON.stringify(report,null,2));
  if(report.summary.duplicateViolations||report.summary.previouslyRatedViolations||report.summary.unsupportedEligibilityViolations)process.exitCode=1;
