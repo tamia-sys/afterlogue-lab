@@ -71,3 +71,18 @@ test('never invent director IDs, pacing or emotional style from bare plot text',
  assert.deepEqual(x.keywordHints.tones.values,[]);
  assert.ok(x.unknown.includes('editing-rhythm'));
 });
+
+test('optional raw provider keyword names are marked as community labels, not verified cinematic style',()=>{
+ const a=f.build(movie('film-a',{genres:['Drama'],keywordNames:['Train station','visual poetry','Train station']},''));
+ const b=f.build(movie('film-b',{genres:['Drama'],keywordNames:['train station','melancholy']},''));
+ assert.equal(a.sourceEvidence.hasOriginalKeywordNames,true);
+ assert.deepEqual(a.keywordHints.rawKeywordNames.values,['train station','visual poetry']);
+ assert.equal(a.keywordHints.rawKeywordNames.certainty,'catalog-label-not-verified-film-style');
+ assert.equal(a.editorial.pacing,null);
+ assert.deepEqual(a.keywordHints.tones.values,[]);
+ const shared=f.compare(a,b);
+ assert.ok(shared.links.some(x=>x.type==='shared-original-catalog-keyword'&&
+  x.evidenceLevel==='community-catalog-label'&&x.values.includes('train station')));
+ assert.equal(f.summarize([movie('film-a',{keywordNames:['train station']}),
+  movie('film-b',{genres:['Drama']})]).withOriginalKeywordNames,1);
+});
