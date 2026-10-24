@@ -231,7 +231,12 @@ function cinematicRerank(entries){
   const best=matches[0]||{score:0,types:0,details:[]};
   const second=matches[1]||{score:0,types:0,details:[]};
   const evidence=best.score*.75+second.score*.2;
-  const adjustment=Math.max(-5,Math.min(6,evidence-(negatives[0]?.score||0)*.5-(best.types===0?3.5:0)));
+  // Sparse evidence must never retain a misleadingly high confidence score.
+  // Ranking can still order exploratory candidates, but they are not
+  // certified personalized picks until a real cinematic connection exists.
+  const adjustment=best.types===0
+   ?-Math.max(12,item.score*.75)
+   :Math.max(-5,Math.min(6,evidence-(negatives[0]?.score||0)*.5));
   const explanation=best.details.length
    ? "Catalog evidence linking this to "+best.source+": "+best.details.map(x=>x.type.replace(/_/g," ")+" — "+x.value).join("; ")+"."
    : "Tentative match based on broad catalog similarities. No verified cinematic-style connection yet.";
