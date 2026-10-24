@@ -35,8 +35,10 @@
    keywordWithTwoIndependentKinds:0,keywordOnly:0,
    keywordWithDifferentAnchorFacetOnly:0,
    keywordWithNegativeCollision:0,corroboratedWithNegativeCollision:0,
+   keywordWithMixedNegativeEvidence:0,corroboratedWithMixedNegativeEvidence:0,
    qualifiedKeywordLinked:0,qualifiedWithIndependentFacet:0,
    qualifiedKeywordOnly:0,qualifiedCorroboratedWithNegativeCollision:0,
+   qualifiedWithMixedNegativeEvidence:0,
    caveat:"Same-anchor corroboration is source-diverse catalog evidence, NOT verified film taste. Themes/tones mapped from community keywords are excluded as non-independent. Plot/device signals from synopses are unverified."
   };
   for(const item of candidates){
@@ -52,7 +54,7 @@
     const synopsis=links.some(l=>l.type==="shared-synopsis-topic");
     const storyDevice=links.some(l=>l.type==="shared-explicit-device");
     const evidenceKinds=Number(creator)+Number(synopsis)+Number(storyDevice);
-    return {hasTag:tags.length>0,creator,synopsis,storyDevice,evidenceKinds};
+    return {hasTag:tags.length>0,tags,creator,synopsis,storyDevice,evidenceKinds};
    });
    const positiveTagLink=comparisons.some(x=>x.hasTag);
    if(!positiveTagLink)continue;
@@ -77,8 +79,18 @@
     if(comparisons.some(x=>!x.hasTag&&(x.creator||x.synopsis||x.storyDevice)))
      outcome.keywordWithDifferentAnchorFacetOnly++;
    }
-   const negativeCollision=[...labelSet].some(t=>negativeLabels.includes(t));
-   if(negativeCollision){
+   // Mixed: candidate has a different specific tag linked to a disliked film.
+   // Exact collision: the very SAME specific tag ties candidate to BOTH
+   // a liked and disliked title. Report these categories separately.
+   const positiveTagValues=new Set(sameAnchor.flatMap(x=>x.tags));
+   const mixedNegative=[...labelSet].some(t=>negativeLabels.includes(t));
+   const exactCollision=[...positiveTagValues].some(t=>negativeLabels.includes(t));
+   if(mixedNegative){
+    outcome.keywordWithMixedNegativeEvidence++;
+    if(isQualified)outcome.qualifiedWithMixedNegativeEvidence++;
+    if(supported)outcome.corroboratedWithMixedNegativeEvidence++;
+   }
+   if(exactCollision){
     outcome.keywordWithNegativeCollision++;
     if(supported){
      outcome.corroboratedWithNegativeCollision++;
