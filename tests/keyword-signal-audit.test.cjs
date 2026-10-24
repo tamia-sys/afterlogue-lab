@@ -57,3 +57,24 @@ test('generic tag check is conservative and transparent',()=>{
  assert.equal(audit.isGeneric('unreliable narrator'),false);
  assert.throws(()=>audit.inspect({positive:{}}),/Expected arrays/);
 });
+
+test('shadow disliked films identify negative-only and conflicting specific evidence separately',()=>{
+ const result=audit.inspect({
+  positive:[film('loved','train station','montage')],
+  negative:[film('not-for-me','train station','remote island')],
+  candidates:[
+   film('positive-only','montage'),
+   film('negative-only','remote island'),
+   film('mixed','montage','remote island'),
+   film('same-phrase-conflict','train station'),
+   film('none','aerial view')]
+ });
+ assert.equal(result.candidatesWithSpecificOverlap,3);
+ assert.equal(result.candidatesWithAnyNegativeSpecificOverlap,3);
+ assert.equal(result.candidatesWithPositiveOnly,1);
+ assert.equal(result.candidatesWithNegativeOnly,1);
+ assert.equal(result.candidatesWithMixedPositiveNegative,2);
+ assert.equal(result.candidatesWithSpecificNegativeOverlap,1);
+ assert.equal(result.negativeControlAvailable,true);
+ assert.equal(result.candidates,5);
+});
