@@ -27,6 +27,8 @@ test('independent reviewer agreement creates a usable two-label profile',()=>{
  assert.equal(x.summary.jointlyReviewedFilms,3);
  assert.equal(x.summary.filmsWithTwoOrMoreAgreedDimensions,3);
  assert.equal(x.summary.filmsWithoutOverlappingReviews,9);
+ assert.equal(x.films.length,12);
+ assert.equal(x.films.find(f=>f.key===keys[11]).usable,false);
  assert.equal(x.films[0].agreed.pacing,'measured');
  assert.equal(x.films[0].agreedDimensionCount,4);
  assert.equal(JSON.stringify(x).includes('entirely invented observation'),false);
@@ -143,4 +145,17 @@ test('two agreeing facets with another reviewer conflict are quarantined from in
   targets:[{key:keys[2],interest:'Interested'}]});
  assert.equal(result.hypothesesMade,0);
  assert.equal(result.abstentionsByReason['insufficient-target-observations'],1);
+});
+
+test('review-absent target remains in the denominator and receives explicit abstention',()=>{
+ const data=reviewed([[keys[0],styleA],[keys[1],styleB]]);
+ const result=holdout.evaluate({consensus:data,
+  anchors:[{key:keys[0],impression:'Loved'},{key:keys[1],impression:'Not for me'}],
+  targets:[{key:keys[11],interest:'Interested'}]});
+ assert.equal(result.ready,true);
+ assert.equal(result.holdoutTargets,1);
+ assert.equal(result.hypothesesMade,0);
+ assert.equal(result.abstentions,1);
+ assert.equal(result.abstentionsByReason['insufficient-target-observations'],1);
+ assert.equal(result.hypotheticalInterestVotes,0);
 });
