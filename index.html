@@ -184,6 +184,12 @@ async function generate(){
   const key="tmdb-movie-"+item.id;
   if(!candidateMap.has(key)){candidateMap.set(key,item);addedBrowse++}
  }
+ // Exclude the fictional Log before spending any metadata requests.
+ const logCandidateKeys=new Set(source.map(x=>x.key));
+ let ratedExcludedFromRetrieval=0;
+ for(const key of logCandidateKeys){
+  if(candidateMap.delete(key))ratedExcludedFromRetrieval++;
+ }
  const initialCandidates=[...candidateMap.values()];
  // Give each retrieval source representation in the bounded metadata budget.
  const titleSource=initialCandidates.filter(x=>x.matchMethod!=="lab_discover_genre");
@@ -197,7 +203,7 @@ async function generate(){
  const evaluatedInitial=new Set(candidates.map(x=>x.key));
  deferredCatalog=new Map([...candidateMap].filter(([key])=>!evaluatedInitial.has(key)));
  const initialDeferred=deferredCatalog.size;
- $("retrieval-audit").textContent="Initial retrieval: "+plans.length+" title-seed plans + "+(initialBrowse.audit?.plans||0)+" Discover pages · "+candidateMap.size+" unique candidates ("+candidates.length+" evaluated; "+initialDeferred+" deferred; "+addedBrowse+" additional Discover films)";
+ $("retrieval-audit").textContent="Initial retrieval: "+plans.length+" title-seed plans + "+(initialBrowse.audit?.plans||0)+" Discover pages · "+candidateMap.size+" unrated candidates ("+candidates.length+" evaluated; "+initialDeferred+" deferred; "+ratedExcludedFromRetrieval+" rated films removed; "+addedBrowse+" additional Discover films)";
  if(!candidates.length)throw Error("No verified candidate films were returned. The catalog may be temporarily unavailable.");
  setStatus("Loading verified genres, themes, and filmmaker credits...");
  const requestedKeys=[...new Set([...source.map(x=>x.key),...candidates.map(x=>x.key)])];
