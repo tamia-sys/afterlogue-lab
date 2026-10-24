@@ -392,7 +392,8 @@ async function retrieveNextBatch(){
    "Excluded: "+rejected.lowScore+" low score, "+rejected.notPersonalized+" not personalized, "+rejected.unmatched+" unmatched, "+rejected.noCinematicEvidence+" no cinematic evidence, "+rejected.balanceRemoved+" by balancing · "+
    Math.min(5,qualified.length)+" selected";
   if(!qualified.length){
-   setStatus("Fresh retrieval succeeded, but no new candidates passed relevance checks. No filler or repeats shown.");
+   setStatus("Retrieval completed, but no unshown candidates passed verified cinematic-evidence checks. No genre-only filler or repeats shown.");
+   track("batch_error",{payload:{reason:"no_verified_cinematic_matches",retrieval_round:retrievalRound,checked:enriched.length,backlog:pending.length}});
    return;
   }
   showNext(qualified);
