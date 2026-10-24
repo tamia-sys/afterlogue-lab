@@ -14,9 +14,10 @@ test('public adapter uses only credential-free POST and reports bounded metadata
   synopsis:i%3===0?'A painter returns to her hometown after exile.':'The musician struggles to reconnect.',
   matched:['Perfect Days','Moonlight']
  }));
- const named=new Map(PROFILES.flatMap(p=>p.history.map(([title],i)=>[
-  title,{id:500+i+title.length,title,poster:'https://example.invalid/poster.jpg',
-   genres:['Drama'],synopsis:'A lonely filmmaker returns to their hometown.'}
+ const named=new Map(PROFILES.flatMap(p=>[...p.history.map(([title])=>title),...p.negativeControls]
+  .map((title,i)=>[
+   title,{id:500+i+title.length,title,poster:'https://example.invalid/poster.jpg',
+    genres:['Drama'],synopsis:'A lonely filmmaker returns to their hometown.'}
  ])));
  const fetchImpl=async (url,request)=>{
   assert.match(url,/afterlogue-catalog-lab$/);
@@ -56,6 +57,15 @@ test('public adapter uses only credential-free POST and reports bounded metadata
  assert.ok(result.summary.fingerprintRawKeywordCoverage>0);
  assert.ok(result.summary.keywordRawLinkRate>0);
  assert.ok(result.summary.keywordSpecificLinkRate<=result.summary.keywordRawLinkRate);
+ assert.equal(result.summary.keywordNegativeControlProfiles,1);
+ assert.equal(result.profiles[0].negativeKeywordAnchors,2);
+ assert.equal(result.profiles[0].unresolvedNegativeControls,0);
+ assert.ok(result.provider.requests>=6);
+ for(const title of PROFILES[0].negativeControls)
+  assert.ok(inputs.some(x=>x.mode==='search'&&x.query===title));
+ assert.ok(!inputs.some(x=>x.mode==='recommend'&&x.titles.some(t=>
+  PROFILES[0].negativeControls.includes(t))));
+
  assert.ok(result.profiles[0].withOriginalKeywords>0);
  assert.ok(inputs.every(x=>!('user_id' in x)&&!('rating' in x)&&!('email' in x)));
  assert.equal(JSON.stringify(result).includes('Catalog Test'),false);
