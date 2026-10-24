@@ -16,9 +16,9 @@
     Array.isArray(input)?input.map(r=>[r?.key||r?.title_key,r?.rating]):
     Object.entries(input||{}).map(([k,v])=>[k,typeof v==="string"?v:v?.rating]);
  const keyOf=x=>typeof x==="string"?x:x?.title_key||x?.key;
- function analyze({engine,policy,entries=[],profiles=[],size=5}={}){
+ function analyze({engine,cinematic,policy,entries=[],profiles=[],size=5}={}){
   if(!engine?.rank||!engine?.balanceShelves||!engine?.storyLane||
-   !policy?.eligible||!Array.isArray(entries)||!Array.isArray(profiles)||
+   !cinematic?.rank||!policy?.eligible||!Array.isArray(entries)||!Array.isArray(profiles)||
    entries.length>600||profiles.length>12||!Number.isInteger(size)||size<1||size>10)
    throw Error("Invalid bounded multi-archetype audit inputs");
   const byKey=new Map(entries.map(x=>[x.key,x]));
@@ -42,7 +42,8 @@
     impressions:Object.fromEntries(rated),
     favorites:profile.favorites,watchlist:profile.watchlist,seen:profile.seen,
     timestamps:profile.timestamps||{}});
-   const eligible=policy.eligible(raw,{ratedKeys:rated.map(([k])=>k),
+   const withCinematic=cinematic.rank(raw,entries,Object.fromEntries(rated));
+   const eligible=policy.eligible(withCinematic,{ratedKeys:rated.map(([k])=>k),
     shownKeys:(profile.shown||[]),decidedKeys:(profile.decided||[])});
    const balanced=engine.balanceShelves({entries:eligible,profileEntries:entries,
     impressions:Object.fromEntries(rated),favorites:profile.favorites,
