@@ -47,14 +47,21 @@
    const supported=uniqueRaw.filter(label=>!exclusions(label));
    const flaggedGeneric=uniqueRaw.filter(isGeneric);
    const flaggedFrequent=uniqueRaw.filter(x=>!isGeneric(x)&&exclusions(x)==='pool-common');
-   const overlapsNegatives=[...new Set(negativeGroups.flatMap(k=>intersects(supported,k)))];
-   const hasPositive=supported.length>0;
-   const ambiguousNegative=hasPositive&&overlapsNegatives.length>0;
+   const negativeRaw=[...new Set(negativeGroups.flatMap(k=>intersects(labels,k)))];
+   const negativeSpecific=negativeRaw.filter(label=>!exclusions(label));
+   const overlapsNegatives=intersects(supported,negativeSpecific);
+   const hasPositive=supported.length>0,hasNegative=negativeSpecific.length>0;
+   const ambiguousNegative=hasPositive&&hasNegative;
+   const exactSameKeywordConflict=overlapsNegatives.length>0;
    return {rawMatched:uniqueRaw.length>0,specificMatched:hasPositive,
     specificLabels:supported,flaggedGeneric:flaggedGeneric.length,
     flaggedPoolCommon:flaggedFrequent.length,
     corroboratedSpecificLabels:supported.length>=2,
-    negativeOverlap:ambiguousNegative,
+    negativeOverlap:exactSameKeywordConflict,
+    mixedPositiveNegative:ambiguousNegative,
+    negativeSpecificMatched:hasNegative,
+    negativeOnly:hasNegative&&!hasPositive,
+    positiveOnly:hasPositive&&!hasNegative,
     genericOrCommonOnly:uniqueRaw.length>0&&!hasPositive,
     hasProviderKeywordLabels:labels.length>0};
   });
@@ -71,9 +78,13 @@
    candidatesOnlyGenericOrCommon:sum('genericOrCommonOnly'),
    candidatesWithTwoOrMoreSpecificLabels:sum('corroboratedSpecificLabels'),
    candidatesWithSpecificNegativeOverlap:sum('negativeOverlap'),
+   candidatesWithAnyNegativeSpecificOverlap:sum('negativeSpecificMatched'),
+   candidatesWithNegativeOnly:sum('negativeOnly'),
+   candidatesWithPositiveOnly:sum('positiveOnly'),
+   candidatesWithMixedPositiveNegative:sum('mixedPositiveNegative'),
    negativeControlAvailable:negative.length>0,
    // Never export film titles or actual keyword contents in the summary.
-   note:'Specific means not on a conservative generic list and not common WITHIN THIS SMALL SAMPLE. Multiple tags from the same community source are NOT independent evidence of actual film similarity.',
+   note:'Specific means not on a conservative generic list and not common WITHIN THIS SMALL SAMPLE. Negative-only and mixed overlaps identify possible contradictions, NOT confirmed dislike of candidate films. Multiple tags from the same source are NOT independent evidence.',
    meanSpecificLabelsAmongMatches:matched.length?
     matched.reduce((n,x)=>n+x.specificLabels.length,0)/matched.length:0
   };
