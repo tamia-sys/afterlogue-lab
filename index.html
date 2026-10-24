@@ -432,7 +432,7 @@ function updateDiscoveryAudit(){
 function showNext(override=null){
  const next=(override||feedbackAdjustedPool()).filter(x=>!seen.has(x.key)).slice(0,5);
  $("results").replaceChildren();
- if(!next.length){track("batch_error",{payload:{reason:"empty_selection"}});const d=document.createElement("div");d.className="empty";d.textContent="No more qualified, unrepeated films in this sample. Generate again to refresh the candidate pool."; $("results").append(d);$("again").disabled=true;return}
+ if(!next.length){track("batch_error",{payload:{reason:"empty_selection"}});const d=document.createElement("div");d.className="empty";d.textContent="No verified cinematic matches are available from this batch. The lab will not fill the shelf with weak genre-only guesses."; $("results").append(d);$("again").disabled=false;return}
  page++;$("page-num").textContent=String(page).padStart(3,"0");
  track("batch_shown",{payload:{titles:next.map((item,i)=>({key:item.key,title:item.title,year:item.year,rank:i+1,score:Math.round(item.score*10)/10,signals:item.cinematicSignalCount||0,reason:String(item.cinematicExplanation||"").slice(0,230),evidence:item.cinematicEvidenceDetails||[],anchor:item.cinematicAnchor||null})),retrieval_round:retrievalRound}});
  for(const item of next){
