@@ -8,6 +8,7 @@ const cinematic=require('../taste-model-v2.js'),policy=require('../eligibility-p
 const anchorBalance=require('../evidence-balance.js');
 const fingerprint=require('../cinematic-fingerprint.js');
 const keywordAudit=require('../keyword-signal-audit.js');
+const corroboration=require('../evidence-corroboration.js');
 function fixtures(){
  const films=Array.from({length:38},(_,i)=>({id:i+1,title:'Test Film '+(i+1),
   poster:'https://example.invalid/poster/'+(i+1),media:'movie',
@@ -93,7 +94,7 @@ test('fingerprint enriches structural audit in shadow mode without altering rank
  const options=fixtures();
  const baseline=await audit.run({...options,profiles:options.profiles.slice(0,1),maxPlans:2,maxCandidates:24});
  const extended=await audit.run({...options,profiles:options.profiles.slice(0,1),
-  maxPlans:2,maxCandidates:24,fingerprint,keywordAudit});
+  maxPlans:2,maxCandidates:24,fingerprint,keywordAudit,corroboration});
  const old=baseline.profiles[0],updated=extended.profiles[0];
  assert.equal(old.qualified,updated.qualified);
  assert.equal(old.firstShelfComplete,updated.firstShelfComplete);
@@ -105,6 +106,8 @@ test('fingerprint enriches structural audit in shadow mode without altering rank
  assert.ok(extended.summary.fingerprintExtraPlotClueCoverage>0);
  assert.ok(updated.fingerprintRawKeywordLinkedTitles>0);
  assert.ok(extended.summary.fingerprintRawKeywordLinkCoverage>0);
+ assert.equal(extended.profiles[0].corroborationKeywordOnly,0);
+ assert.ok(extended.summary.corroborationWithIndependentFacet>=0);
  assert.equal(extended.profiles[0].keywordRawLinks>0,true);
  assert.equal(extended.profiles[0].keywordSpecificLinks,0);
  assert.ok(extended.profiles[0].keywordGenericOnly>0);
@@ -119,9 +122,9 @@ test('optional disliked-film shadow controls cannot change ranking or eligibilit
  const opts=fixtures(),profile={...opts.profiles[0],
   negativeControls:['Test Film 38','A deliberately unresolvable film title']};
  const base=await audit.run({...opts,profiles:[opts.profiles[0]],maxPlans:1,maxCandidates:15,
-  keywordAudit,fingerprint});
+  keywordAudit,fingerprint,corroboration});
  const contrast=await audit.run({...opts,profiles:[profile],maxPlans:1,maxCandidates:15,
-  keywordAudit,fingerprint});
+  keywordAudit,fingerprint,corroboration});
  const a=base.profiles[0],b=contrast.profiles[0];
  assert.equal(a.qualified,b.qualified);
  assert.equal(a.firstShelfComplete,b.firstShelfComplete);
@@ -137,6 +140,7 @@ test('optional disliked-film shadow controls cannot change ranking or eligibilit
  assert.equal(contrast.summary.keywordNegativeControlProfiles,1);
  assert.equal(contrast.summary.keywordShadowNegativesUnresolved,1);
  assert.ok(contrast.summary.keywordQualifiedWithMixedEvidence>=0);
+ assert.equal(base.profiles[0].corroborationKeywordOnly,contrast.profiles[0].corroborationKeywordOnly);
  assert.ok(contrast.summary.keywordQualifiedWithExactConflict>=0);
  assert.ok(!JSON.stringify(contrast).includes('Test Film 38'));
 });
