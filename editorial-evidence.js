@@ -18,6 +18,7 @@
   emotionalRegister:['intimate','wistful','tense','playful','meditative','confrontational','expansive']
  });
  const fields=Object.keys(dimensions);
+ const parsedByValidator=new WeakSet();
  const sourceTypes=['firsthand-screening-notes','rights-cleared-editorial'];
  const isDate=s=>typeof s==='string'&&/^\d{4}-\d\d-\d\d$/.test(s)&&
   !Number.isNaN(Date.parse(s+'T12:00:00Z'))&&new Date(s+'T12:00:00Z').toISOString().slice(0,10)===s;
@@ -56,14 +57,16 @@
    values[field]=detail.value;observed++;
   }
   if(!observed)return {accepted:false,reason:'no-observed-dimensions'};
-  return {accepted:true,filmKey:record.filmKey,values,observed,missing:fields.length-observed,
+  const compiled={accepted:true,filmKey:record.filmKey,values,observed,missing:fields.length-observed,
    provenance:{sourceType:record.provenance.sourceType,
     // No source excerpts, original notes, author names or license URLs in exports.
     hasPermission:record.provenance.sourceType==='rights-cleared-editorial'&&
       !!record.provenance.permissionRef,reviewDeclared:true}};
+  parsedByValidator.add(compiled);
+  return compiled;
  }
  function contrast(a,b){
-  const left=a?.accepted?a:parse(a),right=b?.accepted?b:parse(b);
+  const left=parsedByValidator.has(a)?a:parse(a),right=parsedByValidator.has(b)?b:parse(b);
   if(!left.accepted||!right.accepted)return {comparable:false,reason:'missing-reviewed-observation',
    matched:0,different:0,comparableDimensions:0,unknownDimensions:fields.length};
   const matches=[],differences=[];
