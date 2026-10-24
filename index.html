@@ -304,8 +304,12 @@ async function retrieveNextBatch(){
     // The catalog's title-to-title recommendations recycle the same films.
   // First use independent rotating TMDB Discover pages, grounded in genres
   // of positively rated Log titles; then rank all candidates against the Log.
-  const browse=await api({mode:"lab-browse",media:"movie",round:retrievalRound,
-   anchors:anchors.map(a=>({title:a.title,genres:a.facets.genres||[]}))});
+  let browse={items:[],audit:null};
+  let browseError=null;
+  try{
+   browse=await api({mode:"lab-browse",media:"movie",round:retrievalRound,
+    anchors:anchors.map(a=>({title:a.title,genres:a.facets.genres||[]}))});
+  }catch(error){browseError=String(error);console.warn("[Afterlogue Lab] Discover bridge failed",browseError)}
   if(token!==runToken)return;
   const browseItems=browse.items||[];
   const plans=diversifiedSeedPlans(anchors,retrievalRound*3);
