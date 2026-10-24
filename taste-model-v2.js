@@ -14,16 +14,25 @@
   const f=candidate.facets||{},g=source.facets||{};
   const tones=overlap(f.tones,g.tones);
   const themes=overlap(f.themes,g.themes).filter(x=>!broad.has(String(x).toLowerCase()));
+  // Plot-description clues are weaker than verified catalog facets.
+  // Cross-source matching is allowed, but never label it a verified style.
+  const candidateTopics=[...new Set([...(f.themes||[]),...(f.narrativeThemes||[])])];
+  const sourceTopics=[...new Set([...(g.themes||[]),...(g.narrativeThemes||[])])];
+  const synopsisTopics=overlap(candidateTopics,sourceTopics)
+   .filter(x=>!broad.has(String(x).toLowerCase())&&!themes.includes(x))
+   .filter(x=>(f.narrativeThemes||[]).includes(x)||(g.narrativeThemes||[]).includes(x));
   const directors=overlap(f.directors,g.directors);
   const writers=overlap(f.writers,g.writers);
   const pace=Boolean(f.pace&&g.pace&&f.pace===g.pace);
-  const types=Number(hasEvidence(tones))+Number(hasEvidence(themes))+Number(directors.length+writers.length>0)+Number(pace);
+  const types=Number(hasEvidence(tones))+Number(hasEvidence(themes)||hasEvidence(synopsisTopics))+Number(directors.length+writers.length>0)+Number(pace);
   const score=Math.min(2,tones.length)*1.8+Math.min(2,themes.length)*1.5+
-   Math.min(1,directors.length)*2+Math.min(1,writers.length)*1.2+(pace?1:0)+(types>=2?1.1:0);
+   Math.min(1,directors.length)*2+Math.min(1,writers.length)*1.2+
+   Math.min(2,synopsisTopics.length)*.95+(pace?1:0)+(types>=2?1.1:0);
   const details=[...directors.slice(0,1).map(x=>({type:"director",value:x})),
    ...writers.slice(0,1).map(x=>({type:"writer",value:x})),
    ...tones.slice(0,2).map(x=>({type:"tone",value:x})),
    ...themes.slice(0,2).map(x=>({type:"specific_theme",value:x})),
+   ...synopsisTopics.slice(0,2).map(x=>({type:"synopsis_topic",value:x})),
    ...(pace?[{type:"pacing",value:f.pace}]:[])];
   return {source:source.title,score,types,details,weight:rating==="Loved"?1:.78};
  }
@@ -41,7 +50,8 @@
    // A shared director alone is useful, but is not the same as a verified
    // combination of filmmaker, tone and theme.
    const evidenceKinds=new Set(matches.flatMap(m=>m.details.map(d=>
-    d.type==="director"||d.type==="writer"?"filmmaker":d.type==="specific_theme"?"theme":d.type)));
+    d.type==="director"||d.type==="writer"?"filmmaker":
+    d.type==="specific_theme"||d.type==="synopsis_topic"?"theme":d.type)));
    const multiEvidence=evidenceKinds.size>=2;
    const evidence=matches.slice(0,4).reduce((total,m,i)=>
     total+Math.min(6,m.score)*m.weight*[.75,.24,.12,.06][i],0);
@@ -50,13 +60,24 @@
    const adjustment=!matches.length
     ?-Math.max(12,item.score*.75)-Math.min(4,negativePenalty)
     :Math.max(-9,Math.min(7,evidence-negativePenalty+Math.min(1.4,(matches.length-1)*.45)));
+   const synopsisOnly=matches.length>0&&matches.every(m=>
+    m.details.every(d=>d.type==="synopsis_topic"));
+   const formatDetail=d=>d.type==="director"||d.type==="writer"?
+    "shared "+d.type+" credit (verified TMDB ID)":
+    d.type==="synopsis_topic"?"shared plot topic — "+d.value+" (synopsis clue)":
+    d.type==="specific_theme"?"shared theme — "+d.value:
+    d.type==="tone"?"shared tone — "+d.value:
+    d.type==="pacing"?"shared pacing — "+d.value:d.type.replace(/_/g," ")+" — "+d.value;
    const explanation=matches.length?
-    "Catalog evidence from your Log: "+matches.slice(0,2).map(m=>m.source+" ("+
-     m.details.slice(0,2).map(d=>d.type.replace(/_/g," ")+" — "+d.value).join("; ")+")").join("; ")+
+    (synopsisOnly?"Possible fit from plot descriptions, not a verified style match: ":
+      "Shared catalog and plot evidence from your Log: ")+
+    matches.slice(0,2).map(m=>m.source+" ("+
+     m.details.slice(0,2).map(formatDetail).join("; ")+")").join("; ")+
      (matches.length>2?"; plus "+(matches.length-2)+" other positive Log matches":"")+"."
-    :"No verified cinematic connection found in the catalog.";
+    :"No supported connection found in available catalog or synopsis evidence.";
    return {...item,score:item.score+adjustment,cinematicEvidence:evidence,
     cinematicMetadata:multiEvidence?"specific":"partial",
+    cinematicSynopsisOnly:synopsisOnly,
     cinematicEvidenceKindCount:evidenceKinds.size,
     cinematicSignalCount:best.types,cinematicExplanation:explanation,
     cinematicEvidenceDetails:best.details,cinematicAnchor:best.types?best.source:null,
@@ -66,7 +87,8 @@
  }
  function feedbackSimilarity(a={},b={}){
   return overlap(a.themes,b.themes).length*1.4+overlap(a.tones,b.tones).length*1.4+
-   overlap(a.genres,b.genres).length*.3+overlap(a.directors,b.directors).length*1.5;
+   overlap(a.genres,b.genres).length*.3+overlap(a.directors,b.directors).length*1.5+
+   overlap(a.narrativeThemes,b.narrativeThemes).length*.45;
  }
  return Object.freeze({rank,compare,feedbackSimilarity});
 });
