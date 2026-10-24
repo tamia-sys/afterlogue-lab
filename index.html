@@ -343,7 +343,16 @@ async function retrieveNextBatch(){
    previouslyKnown+" already in pool · "+freshTotal+" genuinely new ("+candidates.length+" evaluated) · "+failed+" failed requests";
   $("retrieval-audit").textContent=summary;
   if(!candidates.length){
-   setStatus(summary+". Retrieval returned no unseen candidates. The provider is repeating the same pool; we will not show duplicates or pretend this is a fresh shelf.");
+   // No newly retrieved titles is not the same as no eligible unseen titles.
+   // Re-evaluate the existing backlog before declaring the catalog exhausted.
+   const backlog=feedbackAdjustedPool();
+   if(backlog.length){
+    track("pipeline_audit",{payload:{retrieval_round:retrievalRound,reason:"retrieval_exhausted_backlog_used",backlog:backlog.length,returned,previouslyKnown,withinRound}});
+    showNext(backlog);
+    setStatus("No new catalog candidates this time; displayed previously retrieved, never-shown films with verified cinematic evidence.");
+    return;
+   }
+   setStatus(summary+". No eligible unseen candidates in retrieval or backlog; no repeats or filler shown.");
    track("batch_error",{payload:{reason:"candidate_pool_exhausted",retrieval_round:retrievalRound,returned,previouslyKnown,withinRound}});
    return;
   }
