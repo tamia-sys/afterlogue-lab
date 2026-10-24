@@ -24,10 +24,12 @@ const ENDPOINT='https://lerrhzrabrqgogfnlsbd.supabase.co/functions/v1/afterlogue
 const PROFILES=[
  {name:'Fictional Cinephile',history:[
   ['Perfect Days','Loved'],['Moonlight','Loved'],['Paris, Texas','Loved'],
-  ['Aftersun','Loved'],['Manchester by the Sea','Liked']]},
+  ['Aftersun','Loved'],['Manchester by the Sea','Liked']],
+  negativeControls:['The Notebook','The Hangover']},
  {name:'Fictional Eclectic',history:[
   ['City of God','Loved'],['The Favourite','Loved'],['Shrek','Loved'],
-  ['Aftersun','Loved'],['The Farewell','Loved']]}
+  ['Aftersun','Loved'],['The Farewell','Loved']],
+  negativeControls:['Transformers: Revenge of the Fallen','The Emoji Movie']}
 ];
 const normalize=x=>String(x||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
  .toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -131,6 +133,11 @@ async function execute(config={},settings={}){
     multiKeywordLinkedTitles:p.keywordMultiLabel,
     negativeKeywordCollisions:p.keywordNegativeOverlap,
     negativeKeywordAnchors:p.keywordNegativeAnchors,
+    unresolvedNegativeControls:p.keywordShadowNegativesUnresolved,
+    negativeKeywordLinkedTitles:p.keywordNegativeSpecific,
+    negativeOnlyKeywordLinkedTitles:p.keywordNegativeOnly,
+    positiveOnlyKeywordLinkedTitles:p.keywordPositiveOnly,
+    mixedKeywordEvidenceTitles:p.keywordMixedPositiveNegative,
     separateStoryDeviceTitles:p.fingerprintExplicitDeviceTitles,
     withSynopsis:p.fingerprintWithSynopsis,withCreatorCredit:p.fingerprintWithCreatorCredit,
     withMappedKeywords:p.fingerprintWithMappedKeywords,
