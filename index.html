@@ -43,6 +43,7 @@ button:hover:not(:disabled){border-color:var(--gold)}
 </main>
 <script src="recommendation-engine.js?v=pipeline-fix-v2"></script>
 <script src="eligibility-policy.js?v=policy-1"></script>
+<script src="taste-model-v2.js?v=module-1"></script>
 <script>
 (()=>{
 "use strict";
@@ -68,7 +69,7 @@ if(!eligibility)throw Error("Recommendation eligibility policy failed to load.")
   const p=profiles[Number($("persona").value)]||profiles[0];
   const row={session_id:testId,event_type,persona:p.name,phase:Number($("phase").value)||0,
    batch_number:page,movie_key:movie?.key||null,movie_title:movie?.title||null,choice,
-   payload:{...payload,build:"taste-v2-experiment-3",run:runToken}};
+   payload:{...payload,build:"taste-v2-module-1",run:runToken}};
   const task=async()=>{
    try{
     const res=await fetch(telemetryEndpoint,{method:"POST",headers:{"apikey":telemetryKey,
@@ -244,61 +245,10 @@ async function generate(){
 }
 // Lab-only cinematic compatibility. Missing tone/pace metadata is unknown, not a mismatch.
 function cinematicRerank(entries){
- // v2: a film's compatibility is a weighted, capped agreement with a person's
- // entire Log, rather than a single mood keyword or strongest source title.
- const positives=profileEntries.filter(x=>["Loved","Liked"].includes(ratingSignals[x.key]));
- const negatives=profileEntries.filter(x=>ratingSignals[x.key]==="Not for me");
- const broad=new Set(["identity","family","control","belonging","survival","love","friendship","loss","growing-up","drama","relationships","coming-of-age"]);
- const shared=(a,b)=>(a||[]).filter(v=>(b||[]).includes(v));
- const compare=(candidate,source)=>{
-  const f=candidate.facets||{},g=source.facets||{};
-  const tones=shared(f.tones,g.tones),themes=shared(f.themes,g.themes).filter(x=>!broad.has(String(x).toLowerCase()));
-  const directors=shared(f.directors,g.directors),writers=shared(f.writers,g.writers);
-  const pace=Boolean(f.pace&&g.pace&&f.pace===g.pace);
-  const types=Number(tones.length>0)+Number(themes.length>0)+Number(directors.length+writers.length>0)+Number(pace);
-  const score=Math.min(2,tones.length)*1.8+Math.min(2,themes.length)*1.5+
-   Math.min(1,directors.length)*2+Math.min(1,writers.length)*1.2+(pace?1:0)+(types>=2?1.1:0);
-  const details=[...directors.slice(0,1).map(x=>({type:"director",value:x})),
-   ...writers.slice(0,1).map(x=>({type:"writer",value:x})),
-   ...tones.slice(0,2).map(x=>({type:"tone",value:x})),
-   ...themes.slice(0,2).map(x=>({type:"specific_theme",value:x})),
-   ...(pace?[{type:"pacing",value:f.pace}]:[])];
-  return {source:source.title,score,types,details,weight:ratingSignals[source.key]==="Loved"?1:.78};
- };
- return entries.map(item=>{
-  const matches=positives.map(x=>compare(item,x)).filter(x=>x.types>0)
-   .sort((a,b)=>b.score*b.weight-a.score*a.weight);
-  const dislikes=negatives.map(x=>compare(item,x)).filter(x=>x.types>0)
-   .sort((a,b)=>b.score-a.score);
-  const best=matches[0]||{score:0,types:0,details:[],weight:1};
-  const evidenceTypes=new Set(matches.flatMap(m=>m.details.map(d=>d.type)));
-  const evidence=matches.slice(0,4).reduce((total,m,i)=>
-   total+Math.min(6,m.score)*m.weight*[.75,.24,.12,.06][i],0);
-  const negativePenalty=dislikes.slice(0,2).reduce((total,m,i)=>
-   total+Math.min(6,m.score)*[.58,.18][i],0);
-  // Dislikes must be able to lower compatibility, even when positive
-  // evidence is sparse. Otherwise a negative-only match escaped punishment.
-  const adjustment=!matches.length
-   ?-Math.max(12,item.score*.75)-Math.min(4,negativePenalty)
-   :Math.max(-9,Math.min(7,evidence-negativePenalty+Math.min(1.4,(matches.length-1)*.45)));
-  const explanation=matches.length?
-   "Catalog evidence from your Log: "+matches.slice(0,2).map(m=>m.source+" ("+
-    m.details.slice(0,2).map(d=>d.type.replace(/_/g," ")+" — "+d.value).join("; ")+")").join("; ")+
-    (matches.length>2?"; plus "+(matches.length-2)+" other positive Log matches":"")+"."
-   :"No verified cinematic connection found in the catalog.";
-  return {...item,score:item.score+adjustment,cinematicEvidence:evidence,
-   cinematicMetadata:evidenceTypes.size>=2?"specific":"partial",
-   cinematicSignalCount:best.types,cinematicExplanation:explanation,
-   cinematicEvidenceDetails:best.details,cinematicAnchor:best.types?best.source:null,
-   cinematicAnchorCount:matches.length,cinematicEvidenceTypes:[...evidenceTypes],
-   cinematicNegativePenalty:negativePenalty};
- }).sort((a,b)=>b.score-a.score);
+ return window.AfterlogueTasteV2.rank(entries,profileEntries,ratingSignals);
 }
 function attractionSimilarity(a={},b={}){
- const overlap=(x,y)=>(x||[]).filter(v=>(y||[]).includes(v)).length;
- // Broad genre overlap is weak evidence; cinematic traits carry more weight.
- return overlap(a.themes,b.themes)*1.4+overlap(a.tones,b.tones)*1.4+
-  overlap(a.genres,b.genres)*.3+overlap(a.directors,b.directors)*1.5;
+ return window.AfterlogueTasteV2.feedbackSimilarity(a,b);
 }
 function feedbackAdjustedPool(allowedKeys=null){
  // Attraction is not a watched-film impression. A pass is a soft, session-only
