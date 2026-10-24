@@ -164,7 +164,7 @@ function diversifiedSeedPlans(anchors,rotation=0){
  return [...new Map(plans.map(p=>[p.join("|"),p])).values()].slice(0,18);
 }
 async function generate(){
- const token=++runToken;track("session_start",{payload:{action:"generate"}});pool=[];seen=new Set();page=0;attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();displayedScores.clear();allRanked=[];retrievalRound=0;fetchingMore=false;pendingPipelineAudit=null;deferredCatalog.clear();$("run").disabled=true;$("again").disabled=true;$("export-audit").disabled=true;
+ const token=++runToken;track("session_start",{payload:{action:"generate"}});pool=[];seen=new Set();page=0;attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();displayedScores.clear();$("score-calibration").textContent="Awaiting attraction feedback for this run.";allRanked=[];retrievalRound=0;fetchingMore=false;pendingPipelineAudit=null;deferredCatalog.clear();$("run").disabled=true;$("again").disabled=true;$("export-audit").disabled=true;
  $("results").replaceChildren();$("stats").textContent="";$("audit").textContent="";$("audit-pool").replaceChildren();$("retrieval-audit").textContent="Initial retrieval in progress.";setStatus("Resolving fictional Log titles against the public film catalog...");
  try{
  const logged=history();const settled=await Promise.allSettled(logged.map(([title])=>resolveTitle(title)));
