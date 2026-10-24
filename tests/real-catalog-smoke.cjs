@@ -150,6 +150,8 @@ async function execute(config={},settings={}){
     corroboratedQualifiedLinks:p.corroborationQualifiedWithIndependentFacet,
     uncorroboratedQualifiedKeywordLinks:p.corroborationQualifiedKeywordOnly,
     corroboratedButDislikeCollision:p.corroborationWithNegativeCollisionAndIndependentFacet,
+    keywordWithMixedNegativeEvidence:p.corroborationWithMixedNegativeEvidence,
+    corroboratedWithMixedNegativeEvidence:p.corroborationWithMixedNegativeEvidenceAndIndependentFacet,
     differentLogAnchorSupportOnly:p.corroborationCrossAnchorOnly,
     separateStoryDeviceTitles:p.fingerprintExplicitDeviceTitles,
     withSynopsis:p.fingerprintWithSynopsis,withCreatorCredit:p.fingerprintWithCreatorCredit,
