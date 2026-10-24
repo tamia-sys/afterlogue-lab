@@ -142,7 +142,7 @@ test('sparse agreement and multireviewer agreement never generate overconfident 
  assert.equal(sparse.reliability.pacing.cohensKappa,null);
  const three=packet('reviewer-03',ids.map(id=>record(id,'reviewer-03',{pacing:'measured'})));
  const multi=compare([a,b,three]);
- assert.equal(multi.reliabilityStatus,'two-reviewers-required');
+ assert.equal(multi.reliabilityStatus,'exactly-two-reviewers-required');
  assert.equal(multi.kappaEstimatedDimensions,0);
  assert.equal(multi.reliability.pacing.cohensKappa,null);
 });
