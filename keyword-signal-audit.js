@@ -37,7 +37,7 @@
   for(const film of films)for(const kw of keywords(film))
    frequency.set(kw,(frequency.get(kw)||0)+1);
   // IDF-like test is intentionally NOT a global rarity assertion.
-  const threshold=Math.max(3,Math.ceil(films.length*.28));
+  const threshold=Math.max(4,Math.ceil(films.length*.35));
   const exclusions=label=>isGeneric(label)?'generic':
     (frequency.get(label)||0)>=threshold?'pool-common':null;
   const positiveGroups=positive.map(keywords),negativeGroups=negative.map(keywords);
@@ -74,8 +74,6 @@
    negativeControlAvailable:negative.length>0,
    // Never export film titles or actual keyword contents in the summary.
    note:'Specific means not on a conservative generic list and not common WITHIN THIS SMALL SAMPLE. Multiple tags from the same community source are NOT independent evidence of actual film similarity.',
-   // Internal debug rows deliberately kept out of the public API/output.
-   ...(false?{rows}:{}),
    meanSpecificLabelsAmongMatches:matched.length?
     matched.reduce((n,x)=>n+x.specificLabels.length,0)/matched.length:0
   };
