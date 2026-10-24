@@ -26,7 +26,10 @@ const metrics=[
 const fields=[
  'found','evaluated','metadataReturned','metadataRequested','qualified',
  'firstShelfComplete','secondShelfComplete','noEvidence','lowScore',
- 'extraPlotClueTitles','potentialNewPlotLinks','separateStoryDeviceTitles'
+ 'extraPlotClueTitles','potentialNewPlotLinks','separateStoryDeviceTitles',
+ 'withSynopsis','withCreatorCredit','withMappedKeywords','withOriginalKeywords',
+ 'withPlotClues','qualifiedTitleLinkedOnly','evaluatedTitleLinkedOnly',
+ 'qualifiedBrowseOnly','evaluatedBrowseOnly','bestEvidenceSingle','bestEvidenceMultiple'
 ];
 function safeNumber(value){return typeof value==='number'&&Number.isFinite(value)?value:null;}
 function sanitize(raw){
