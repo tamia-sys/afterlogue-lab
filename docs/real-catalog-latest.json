@@ -1,6 +1,6 @@
 {
   "format": "afterlogue-aggregate-public-catalog-v1",
-  "checkedAt": "2026-10-24T16:56:23.288Z",
+  "checkedAt": "2026-10-24T16:56:36.421Z",
   "status": "partially_or_fully_completed",
   "fictionalOnly": true,
   "shadowFingerprintOnly": true,
@@ -10,7 +10,7 @@
     "profilesAttempted": 2,
     "profilesCompleted": 2,
     "profilesFailed": 0,
-    "meanUniqueRetrieved": 145.5,
+    "meanUniqueRetrieved": 140.5,
     "meanEvaluatedCandidates": 24,
     "meanQualifiedCandidates": 2,
     "firstShelfCompletionRate": 0,
@@ -149,7 +149,7 @@
     {
       "profile": "Fictional Eclectic",
       "status": "completed",
-      "found": 201,
+      "found": 191,
       "evaluated": 24,
       "metadataReturned": 31,
       "metadataRequested": 31,
