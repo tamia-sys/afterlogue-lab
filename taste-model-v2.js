@@ -37,6 +37,12 @@
     .sort((a,b)=>b.score-a.score);
    const best=matches[0]||{score:0,types:0,details:[],weight:1};
    const evidenceTypes=new Set(matches.flatMap(m=>m.details.map(d=>d.type)));
+   // Audit whether a match has more than one independent kind of evidence.
+   // A shared director alone is useful, but is not the same as a verified
+   // combination of filmmaker, tone and theme.
+   const evidenceKinds=new Set(matches.flatMap(m=>m.details.map(d=>
+    d.type==="director"||d.type==="writer"?"filmmaker":d.type==="specific_theme"?"theme":d.type)));
+   const multiEvidence=evidenceKinds.size>=2;
    const evidence=matches.slice(0,4).reduce((total,m,i)=>
     total+Math.min(6,m.score)*m.weight*[.75,.24,.12,.06][i],0);
    const negativePenalty=dislikes.slice(0,2).reduce((total,m,i)=>
@@ -50,7 +56,8 @@
      (matches.length>2?"; plus "+(matches.length-2)+" other positive Log matches":"")+"."
     :"No verified cinematic connection found in the catalog.";
    return {...item,score:item.score+adjustment,cinematicEvidence:evidence,
-    cinematicMetadata:evidenceTypes.size>=2?"specific":"partial",
+    cinematicMetadata:multiEvidence?"specific":"partial",
+    cinematicEvidenceKindCount:evidenceKinds.size,
     cinematicSignalCount:best.types,cinematicExplanation:explanation,
     cinematicEvidenceDetails:best.details,cinematicAnchor:best.types?best.source:null,
     cinematicAnchorCount:matches.length,cinematicEvidenceTypes:[...evidenceTypes],
