@@ -50,6 +50,10 @@
    candidateThemeCoverage:ratio(sum('candidateThemes'),sum('evaluatedCandidates')),
    candidateToneCoverage:ratio(sum('candidateTones'),sum('evaluatedCandidates')),
    candidatePlotCoverage:ratio(sum('candidatePlot'),sum('evaluatedCandidates')),
+   fingerprintExtraPlotClueCoverage:ratio(sum('fingerprintExtraPlotTitles'),sum('evaluatedCandidates')),
+   fingerprintExplicitDeviceCoverage:ratio(sum('fingerprintExplicitDeviceTitles'),sum('evaluatedCandidates')),
+   meanPotentialFingerprintLinks:mean('fingerprintLinkedTitles'),
+   meanPotentialNewPlotLinks:mean('fingerprintNewPlotLinks'),
    multiSignalEligibleShare:ratio(sum('multiSignalEligible'),sum('qualified')),
    meanDistinctGenresFirstFive:mean('topGenres'),
    meanDistinctPositiveLogAnchorsFirstFive:mean('topAnchors'),
@@ -58,7 +62,7 @@
    independentBrowseFailures:sum('browseFailures'),metadataFailures:sum('metadataFailures')};
  }
  async function run({profiles,api,resolveTitle,toEntry,features,enrich,engine,cinematic,policy,
-   anchorBalance,onProgress=()=>{},shouldCancel=()=>false,maxPlans=4,maxCandidates=60}={}){
+   anchorBalance,fingerprint=null,onProgress=()=>{},shouldCancel=()=>false,maxPlans=4,maxCandidates=60}={}){
   if(!Array.isArray(profiles)||!profiles.length||profiles.length>20)throw Error('Choose 1–20 fictional viewer histories');
   if(![api,resolveTitle,toEntry,features,enrich].every(x=>typeof x==='function')||
      !engine?.rank||!cinematic?.rank||!policy?.eligible||!anchorBalance?.balance)
@@ -160,6 +164,28 @@
     const top=arranged.slice(0,5),next=arranged.slice(5,10);
     const selectedKeys=[...top,...next].map(x=>x.key);
     const candidateFeatures=complete.filter(x=>!rated.has(x.key));
+    // SHADOW DIAGNOSTICS ONLY: do not add these tags to scored entries.
+    // A shared literal synopsis phrase is not a verified stylistic fit.
+    const fpSummary={fingerprintExtraPlotTitles:0,fingerprintExplicitDeviceTitles:0,
+     fingerprintLinkedTitles:0,fingerprintNewPlotLinks:0};
+    if(fingerprint?.build&&fingerprint?.compare){
+     const sourceItems=complete.filter(x=>["Loved","Liked"].includes(ratings[x.key]));
+     const sourceFp=sourceItems.map(x=>({entry:x,fp:fingerprint.build(x)}));
+     for(const candidate of candidateFeatures){
+      const current=fingerprint.build(candidate);
+      const baseKnown=new Set((candidate.facets?.narrativeThemes||[]).map(x=>String(x).toLowerCase()));
+      const extra=current.synopsisClues.plotTopics.values.filter(x=>!baseKnown.has(x));
+      if(extra.length)fpSummary.fingerprintExtraPlotTitles++;
+      if(current.synopsisClues.explicitDevices.values.length)fpSummary.fingerprintExplicitDeviceTitles++;
+      if(sourceFp.some(x=>fingerprint.compare(current,x.fp).specificLinkKinds>0))
+       fpSummary.fingerprintLinkedTitles++;
+      if(sourceFp.some(x=>{
+       const otherKnown=new Set((x.entry.facets?.narrativeThemes||[]).map(v=>String(v).toLowerCase()));
+       const otherExtra=x.fp.synopsisClues.plotTopics.values.filter(v=>!otherKnown.has(v));
+       return otherExtra.some(v=>extra.includes(v));
+      }))fpSummary.fingerprintNewPlotLinks++;
+     }
+    }
     const row={profile:profile.name,historyTitles:found.length,positiveAnchors:selected.length,
      titleRequests:plans.length,recommendationFailures,browseFailures,metadataFailures,
      invalidProviderItems:invalid,providerDuplicates:duplicated,uniqueRetrieved:all.length,
@@ -172,7 +198,7 @@
      qualified:eligible.length,multiSignalEligible:bestEvidenceMultiple,
      synopsisOnlyEligible:eligible.filter(x=>x.cinematicSynopsisOnly).length,
      legacyPositive:legacyRanked.filter(x=>x.score>0).length,
-     bestEvidenceNone,bestEvidenceSingle,bestEvidenceMultiple,...funnel,...routes,
+     bestEvidenceNone,bestEvidenceSingle,bestEvidenceMultiple,...funnel,...routes,...fpSummary,
      firstShelfComplete:Number(top.length===5),secondShelfComplete:Number(next.length===5),
      topGenres:unique(top.flatMap(x=>facetsOf(x).genres||[])).length,
      topAnchors:unique(top.map(x=>x.cinematicAnchor).filter(Boolean)).length,
@@ -197,6 +223,7 @@
     'Missing film metadata is unknown rather than negative taste evidence.',
    'Candidate rejection categories are exclusive but diagnostic, not a causal explanation for taste.',
    'Source-specific yields are based on this bounded sample, not global TMDB search relevance.',
+   'Cinematic Fingerprint tags are experimental, based on literal synopsis phrasing, and are excluded from recommendation scoring.',
     'No private Log, real member ID, or user interest responses were accessed.']};
  }
  return Object.freeze({run,summarize,chooseAnchors});
