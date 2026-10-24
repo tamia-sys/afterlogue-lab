@@ -6,9 +6,11 @@ on:
       - recommendation-engine.js
       - solo-taste-validation.js
       - multi-archetype-audit.js
+      - shelf-rotation-shadow.js
       - tests/solo-taste-validation.test.cjs
       - tests/multi-archetype-fixture.cjs
       - tests/multi-archetype-audit.test.cjs
+      - tests/shelf-rotation-shadow.test.cjs
       - .github/workflows/solo-taste-qa.yml
   workflow_dispatch:
 permissions:
@@ -23,4 +25,4 @@ jobs:
         with:
           node-version: '22'
       - name: Test Log-only taste evidence, withheld ratings and preference stability
-        run: node --test tests/solo-taste-validation.test.cjs tests/multi-archetype-audit.test.cjs
+        run: node --test tests/solo-taste-validation.test.cjs tests/multi-archetype-audit.test.cjs tests/shelf-rotation-shadow.test.cjs
