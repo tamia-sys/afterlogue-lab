@@ -26,7 +26,7 @@ test('same genre is irrelevant; contradictory style is flagged, not automaticall
  assert.equal(r.matched,0);
  assert.equal(r.different,2);
  assert.equal(r.multiDimensionMatch,false);
- assert.equal(r.unknownDimensions,5);
+ assert.equal(r.unknownDimensions,4);
 });
 test('mixed independent evidence preserves ambiguity',()=>{
  const a=annotation('fictional-film-a',{pacing:'measured',visualApproach:'observational',
@@ -44,7 +44,7 @@ test('never pretend missing pacing or unreviewed opinions are facts',()=>{
  const r=evidence.contrast(a,b);
  assert.equal(r.comparable,true);
  assert.equal(r.comparableDimensions,0);
- assert.equal(r.unknownDimensions,7);
+ assert.equal(r.unknownDimensions,6);
  const pending={...a,reviewStatus:'draft'};
  assert.equal(evidence.parse(pending).reason,'not-reviewed');
  assert.equal(evidence.contrast(pending,b).comparable,false);
