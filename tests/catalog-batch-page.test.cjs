@@ -21,8 +21,8 @@ test('source-labeled cinematic fingerprint is shown only in shadow diagnostics',
  assert.match(html,/fpCandidates\.withExplicitNarrativeDeviceClue/);
  assert.match(html,/fingerprintExtraPlotClueCoverage/);
  assert.match(html,/fingerprintRawKeywordLinkedTitles/);
- assert.match(html,/keyword-signal-audit\\.js\\?v=keyword-specificity-1/);
- assert.match(html,/keywordAudit:window\\.AfterlogueKeywordSignalAudit/);
+ assert.match(html,/keyword-signal-audit\.js\?v=keyword-specificity-1/);
+ assert.match(html,/keywordAudit:window\.AfterlogueKeywordSignalAudit/);
 });
 test('feedback calibration uses the score frozen at first display',()=>{
  assert.match(html,/<script src="interest-calibration\.js\?v=calibration-1"><\/script>/);
