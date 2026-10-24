@@ -1,0 +1,172 @@
+{
+  "schema": "afterlogue-synthetic-counterfactual-v1",
+  "date": "2026-10-24",
+  "candidateSource": "77 invented movie records, existing Lab scorer, no community tag data",
+  "shelves": 3,
+  "perShelf": 5,
+  "heldoutVotes": "All entirely fictional and manually authored in separate test fixture; not genuinely blind humans or real audience data",
+  "studyScenarios": [
+    {
+      "syntheticPersona": "Fictional Eclectic",
+      "fictionalInterestScenario": "Fictional Eclectic",
+      "eligibleAlreadyQualified": 56,
+      "originalSupportedLanes": 3,
+      "shadowSupportedLanes": 5,
+      "firstFiveUnchanged": true,
+      "coveragePromotions": 4,
+      "removedFromTop15": 3,
+      "addedToTop15": 3,
+      "originalInterested": 9,
+      "shadowInterested": 11,
+      "originalNotDrawn": 5,
+      "shadowNotDrawn": 4,
+      "unknownOrUnsure": 1,
+      "netPreferenceDifference": null,
+      "possibleNetDifferenceRange": {
+        "minimum": 2,
+        "maximum": 4
+      },
+      "diagnosticVerdict": "insufficient-heldout-evidence",
+      "releaseReadiness": "NOT_VALIDATED_FOR_PRODUCTION"
+    },
+    {
+      "syntheticPersona": "Fictional Eclectic",
+      "fictionalInterestScenario": "Fictional Eclectic Selective",
+      "eligibleAlreadyQualified": 56,
+      "originalSupportedLanes": 3,
+      "shadowSupportedLanes": 5,
+      "firstFiveUnchanged": true,
+      "coveragePromotions": 4,
+      "removedFromTop15": 3,
+      "addedToTop15": 3,
+      "originalInterested": 15,
+      "shadowInterested": 12,
+      "originalNotDrawn": 0,
+      "shadowNotDrawn": 3,
+      "unknownOrUnsure": 0,
+      "netPreferenceDifference": -6,
+      "possibleNetDifferenceRange": {
+        "minimum": -6,
+        "maximum": -6
+      },
+      "diagnosticVerdict": "simulated-harm",
+      "releaseReadiness": "NOT_VALIDATED_FOR_PRODUCTION"
+    },
+    {
+      "syntheticPersona": "Fictional Quiet Focus",
+      "fictionalInterestScenario": "Fictional Quiet Focus",
+      "eligibleAlreadyQualified": 11,
+      "originalSupportedLanes": 2,
+      "shadowSupportedLanes": 2,
+      "firstFiveUnchanged": true,
+      "coveragePromotions": 0,
+      "removedFromTop15": 0,
+      "addedToTop15": 0,
+      "originalInterested": 7,
+      "shadowInterested": 7,
+      "originalNotDrawn": 4,
+      "shadowNotDrawn": 4,
+      "unknownOrUnsure": 0,
+      "netPreferenceDifference": 0,
+      "possibleNetDifferenceRange": {
+        "minimum": 0,
+        "maximum": 0
+      },
+      "diagnosticVerdict": "identical",
+      "releaseReadiness": "NOT_VALIDATED_FOR_PRODUCTION"
+    },
+    {
+      "syntheticPersona": "Fictional Exposure Baseline",
+      "fictionalInterestScenario": "Fictional Exposure Baseline",
+      "eligibleAlreadyQualified": 47,
+      "originalSupportedLanes": 3,
+      "shadowSupportedLanes": 3,
+      "firstFiveUnchanged": true,
+      "coveragePromotions": 4,
+      "removedFromTop15": 2,
+      "addedToTop15": 2,
+      "originalInterested": 10,
+      "shadowInterested": 10,
+      "originalNotDrawn": 5,
+      "shadowNotDrawn": 5,
+      "unknownOrUnsure": 0,
+      "netPreferenceDifference": 0,
+      "possibleNetDifferenceRange": {
+        "minimum": 0,
+        "maximum": 0
+      },
+      "diagnosticVerdict": "simulated-tie",
+      "releaseReadiness": "NOT_VALIDATED_FOR_PRODUCTION"
+    },
+    {
+      "syntheticPersona": "Fictional Exposure Loop",
+      "fictionalInterestScenario": "Fictional Exposure Loop",
+      "eligibleAlreadyQualified": 37,
+      "originalSupportedLanes": 3,
+      "shadowSupportedLanes": 4,
+      "firstFiveUnchanged": true,
+      "coveragePromotions": 4,
+      "removedFromTop15": 3,
+      "addedToTop15": 3,
+      "originalInterested": 12,
+      "shadowInterested": 11,
+      "originalNotDrawn": 3,
+      "shadowNotDrawn": 4,
+      "unknownOrUnsure": 0,
+      "netPreferenceDifference": -2,
+      "possibleNetDifferenceRange": {
+        "minimum": -2,
+        "maximum": -2
+      },
+      "diagnosticVerdict": "simulated-harm",
+      "releaseReadiness": "NOT_VALIDATED_FOR_PRODUCTION"
+    },
+    {
+      "syntheticPersona": "Fictional Genuine Animation Fan",
+      "fictionalInterestScenario": "Fictional Genuine Animation Fan",
+      "eligibleAlreadyQualified": 17,
+      "originalSupportedLanes": 2,
+      "shadowSupportedLanes": 2,
+      "firstFiveUnchanged": true,
+      "coveragePromotions": 0,
+      "removedFromTop15": 0,
+      "addedToTop15": 0,
+      "originalInterested": 12,
+      "shadowInterested": 12,
+      "originalNotDrawn": 3,
+      "shadowNotDrawn": 3,
+      "unknownOrUnsure": 0,
+      "netPreferenceDifference": 0,
+      "possibleNetDifferenceRange": {
+        "minimum": 0,
+        "maximum": 0
+      },
+      "diagnosticVerdict": "identical",
+      "releaseReadiness": "NOT_VALIDATED_FOR_PRODUCTION"
+    },
+    {
+      "syntheticPersona": "Fictional Sparse Starter",
+      "fictionalInterestScenario": "Fictional Sparse Starter",
+      "eligibleAlreadyQualified": 16,
+      "originalSupportedLanes": 1,
+      "shadowSupportedLanes": 1,
+      "firstFiveUnchanged": true,
+      "coveragePromotions": 0,
+      "removedFromTop15": 0,
+      "addedToTop15": 0,
+      "originalInterested": 5,
+      "shadowInterested": 5,
+      "originalNotDrawn": 10,
+      "shadowNotDrawn": 10,
+      "unknownOrUnsure": 0,
+      "netPreferenceDifference": 0,
+      "possibleNetDifferenceRange": {
+        "minimum": 0,
+        "maximum": 0
+      },
+      "diagnosticVerdict": "identical",
+      "releaseReadiness": "NOT_VALIDATED_FOR_PRODUCTION"
+    }
+  ],
+  "overall": "Not validated for production. Variation in fictional labels can turn genre coverage improvements into synthetic interest harm."
+}
