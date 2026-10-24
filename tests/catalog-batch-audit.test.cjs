@@ -9,6 +9,8 @@ const anchorBalance=require('../evidence-balance.js');
 const fingerprint=require('../cinematic-fingerprint.js');
 const keywordAudit=require('../keyword-signal-audit.js');
 const corroboration=require('../evidence-corroboration.js');
+const editorialEvidence=require('../editorial-evidence.js');
+const editorialEvaluation=require('../editorial-evaluation.js');
 function fixtures(){
  const films=Array.from({length:38},(_,i)=>({id:i+1,title:'Test Film '+(i+1),
   poster:'https://example.invalid/poster/'+(i+1),media:'movie',
@@ -143,4 +145,41 @@ test('optional disliked-film shadow controls cannot change ranking or eligibilit
  assert.equal(base.profiles[0].corroborationKeywordOnly,contrast.profiles[0].corroborationKeywordOnly);
  assert.ok(contrast.summary.keywordQualifiedWithExactConflict>=0);
  assert.ok(!JSON.stringify(contrast).includes('Test Film 38'));
+});
+
+test('fictional authored film observations add coverage without altering recommendation scores or shelves',async()=>{
+ const opts=fixtures(),p=opts.profiles.slice(0,1);
+ const annotation=(key,values)=>({
+  filmKey:key,reviewStatus:'reviewed',
+  provenance:{sourceType:'firsthand-screening-notes',
+   reviewerCode:'fictional-test-only',reviewedOn:'2026-10-24'},
+  observations:Object.fromEntries(Object.entries(values).map(([dimension,value])=>[
+   dimension,{value,originalRationale:'A deliberately fictional description authored only to test validation.'}
+  ]))
+ });
+ const editorialObservations=[
+  annotation('tmdb-movie-1',{pacing:'measured',visualApproach:'observational',
+   narrativeStructure:'episodic'}),
+  annotation('tmdb-movie-5',{pacing:'measured',visualApproach:'observational',
+   narrativeStructure:'episodic'}),
+  annotation('tmdb-movie-6',{pacing:'brisk',visualApproach:'expressive-stylized'})
+ ];
+ const baseline=await audit.run({...opts,profiles:p,maxPlans:1,maxCandidates:15});
+ const enhanced=await audit.run({...opts,profiles:p,maxPlans:1,maxCandidates:15,
+  editorialEvidence,editorialEvaluation,editorialObservations});
+ const a=baseline.profiles[0],b=enhanced.profiles[0];
+ assert.equal(a.qualified,b.qualified);
+ assert.equal(a.firstShelfComplete,b.firstShelfComplete);
+ assert.equal(a.secondShelfComplete,b.secondShelfComplete);
+ assert.equal(a.topAnchors,b.topAnchors);
+ assert.equal(a.duplicateViolations,b.duplicateViolations);
+ assert.equal(a.editorialReviewedPositive,0);
+ assert.equal(b.editorialReviewedPositive,1);
+ assert.equal(b.editorialReviewedCandidates,2);
+ assert.equal(b.editorialMultiDimensionCandidates,1);
+ assert.equal(b.editorialUnknownCandidates,b.evaluatedCandidates-2);
+ assert.equal(b.candidateAccounting,'reconciled');
+ const reportText=JSON.stringify(enhanced);
+ assert.ok(!reportText.includes('fictional-test-only'));
+ assert.ok(!reportText.includes('A deliberately fictional'));
 });
