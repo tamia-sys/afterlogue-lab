@@ -548,8 +548,8 @@ function showNext(override=null){
  }
  $("again").disabled=false;updateDiscoveryAudit();
 }
-$("persona").addEventListener("change",()=>{runToken++;pool=[];seen.clear();attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();$("discovery-audit").textContent="";$("again").disabled=true;renderHistory();$("results").textContent="Generate to see this viewer's recommendations.";setStatus("")});
-$("phase").addEventListener("change",()=>{runToken++;pool=[];seen.clear();attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();$("again").disabled=true;renderHistory();$("results").textContent="Generate to see this session's recommendations.";setStatus("")});
+$("persona").addEventListener("change",()=>{runToken++;pool=[];seen.clear();attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();$("discovery-audit").textContent="";$("again").disabled=true;$("export-audit").disabled=true;allRanked=[];profileEntries=[];ratingSignals={};renderHistory();$("results").textContent="Generate to see this viewer's recommendations.";setStatus("")});
+$("phase").addEventListener("change",()=>{runToken++;pool=[];seen.clear();attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();$("again").disabled=true;$("export-audit").disabled=true;allRanked=[];profileEntries=[];ratingSignals={};renderHistory();$("results").textContent="Generate to see this session's recommendations.";setStatus("")});
 function exportDiagnosticSnapshot(){
  if(!allRanked.length)return;
  const selected=profiles[Number($("persona").value)];
