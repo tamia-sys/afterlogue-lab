@@ -47,7 +47,8 @@ function makePersona(index,items,{seed=1}={}){
  const log=new Map();
  for(const id of lanes){
   const matches=items.filter(x=>x.syntheticLane===LANES[id].name);
-  const order=[...matches].sort((a,b)=>rng()-.5);
+  const order=[...matches];
+  for(let j=order.length-1;j>0;j--){const k=Math.floor(rng()*(j+1));[order[j],order[k]]=[order[k],order[j]]}
   const count=Math.max(3,Math.floor(12/lanes.length));
   for(const item of order.slice(0,count))log.set(item.key,rng()<.62?'Loved':'Liked');
  }
@@ -70,6 +71,7 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
   const ranked=ranker.rank({entries:source,category:'movies',impressions:scores});
   const adjusted=cinematic.rank(ranked,source,scores);
   const valid=eligibility.eligible(adjusted,{ratedKeys:[...keys]});
+  const rawShelf=valid.slice(0,shelfSize);
   // Match the Lab's real post-eligibility two-stage shelf balancing.
   const ordered=balancer.balance(ranker.balanceShelves({entries:valid,profileEntries:source,
    impressions:scores,category:'movies',size:shelfSize}),shelfSize);
@@ -78,6 +80,9 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
   const duplicateCount=shown.length-new Set(shown.map(x=>x.key)).size;
   const loggedCount=shown.filter(x=>keys.has(x.key)).length;
   const unsupported=shown.filter(x=>!(x.cinematicSignalCount>=1)||!(x.score>0)).length;
+  const rawGenres=new Set(rawShelf.flatMap(x=>x.facets?.genres||[]));
+  const rawLanes=new Set(rawShelf.map(x=>x.syntheticLane));
+  const rawAnchors=new Set(rawShelf.map(x=>x.cinematicAnchor).filter(Boolean));
   const firstGenres=new Set(shelf1.flatMap(x=>x.facets?.genres||[]));
   const firstLanes=new Set(shelf1.map(x=>x.syntheticLane));
   const firstAnchors=new Set(shelf1.map(x=>x.cinematicAnchor).filter(Boolean));
@@ -86,6 +91,7 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
    completeFirst:Number(shelf1.length>=shelfSize),completeSecond:Number(shelf2.length>=shelfSize),
    duplicates:duplicateCount,loggedViolations:loggedCount,unsupported,
    genres:firstGenres.size,lanes:firstLanes.size,anchors:firstAnchors.size,
+   rawGenres:rawGenres.size,rawLanes:rawLanes.size,rawAnchors:rawAnchors.size,
    anchorDominance:shelf1.length?maxAnchor/shelf1.length:0,
    strongSignals:shelf1.filter(x=>x.cinematicSignalCount>=2).length});
  }
@@ -93,6 +99,8 @@ function run({personas=240,perLane=24,missingRate=.25,seed=23,shelfSize=5}={},de
   return {personas:rows.length,firstShelfCoverage:avg(rows,'completeFirst'),
    twoShelfCoverage:avg(rows,'completeSecond'),meanEligibleCandidates:avg(rows,'qualified'),
    meanGenresAt5:avg(rows,'genres'),meanSyntheticLanesAt5:avg(rows,'lanes'),
+   meanUnbalancedGenresAt5:avg(rows,'rawGenres'),meanUnbalancedLanesAt5:avg(rows,'rawLanes'),
+   meanUnbalancedAnchorsAt5:avg(rows,'rawAnchors'),
    meanDistinctSourceAnchorsAt5:avg(rows,'anchors'),
    meanDominantAnchorFraction:avg(rows,'anchorDominance'),
    meanMultiSignalAt5:avg(rows,'strongSignals'),
