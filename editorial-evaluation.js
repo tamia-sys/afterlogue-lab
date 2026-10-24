@@ -12,11 +12,15 @@
   if(!editorialEvidence?.parse||!editorialEvidence?.contrast||
    ![observations,positiveKeys,candidateKeys,qualifiedKeys].every(Array.isArray))
    throw Error('Missing independently authored editorial evaluation inputs');
-  const accepted=new Map();let rejected=0,duplicate=0;
+  const accepted=new Map(),quarantined=new Set();let rejected=0,duplicate=0;
   for(const source of observations){
    const parsed=editorialEvidence.parse(source);
    if(!parsed.accepted){rejected++;continue}
-   if(accepted.has(parsed.filmKey)){duplicate++;accepted.delete(parsed.filmKey);continue}
+   if(quarantined.has(parsed.filmKey)){duplicate++;continue}
+   if(accepted.has(parsed.filmKey)){
+    duplicate++;accepted.delete(parsed.filmKey);quarantined.add(parsed.filmKey);
+    continue;
+   }
    accepted.set(parsed.filmKey,parsed);
   }
   const positive=new Set(positiveKeys),qualified=new Set(qualifiedKeys);
