@@ -15,6 +15,21 @@ The batch uses the existing Lab public-catalog endpoint: limited title-linked re
 
 Request caps: four title-recommendation requests and one independent-browse request per fictional profile, plus title-resolution and 12-ID feature requests. At most 60 candidate films per profile are evaluated. This is a **smaller provider sampling strategy** than the normal interactive Lab, so do not compare raw counts as if the request budgets were identical. Requests can be rate-limited.
 
+## Candidate rejection and retrieval-source diagnostics (updated October 23)
+
+The one-click audit now reports a reconciled **candidate funnel** for each fictional profile:
+
+- Eligible candidates, and mutually exclusive rejections attributed to non-positive final score, missing cinematic evidence, missing positive-Log support, or other eligibility reasons.
+- Evaluated/qualified counts for **title-linked-only**, **independent-browse-only**, and **both-route** candidates. These show which source adds qualified candidates, not whether TMDB as a whole is accurate.
+- How many qualified picks have one versus multiple cinematic signal types for their strongest positive title match.
+- An explicitly labeled possible bottleneck: candidate scarcity, sparse metadata response, eligibility shortfall, shallow strongest evidence, or no obvious structural blocker.
+
+Each report includes a candidate-accounting check: eligible + rejected must equal the evaluated candidate count. Any mismatch appears in the UI.
+
+Earlier read-only lab evidence indicated 10 of 20 strongest links used a shared tone, 8 used a specific theme, 1 a director credit, and 1 a synopsis topic. All were **single-type best-film links**; this does not rule out more varied weaker evidence elsewhere in the Log or establish a psychological explanation for a viewer's taste.
+
+These expanded diagnostics are implemented and passed mocked-provider tests, but **not yet run against the real catalog in a complete five-profile batch**. This distinction should be preserved in reporting.
+
 ## Measures
 
 - Retrieved candidates, deduplicated provider results, rated titles removed, evaluated and deferred counts.
