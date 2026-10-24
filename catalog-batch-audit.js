@@ -54,6 +54,11 @@
    fingerprintExplicitDeviceCoverage:ratio(sum('fingerprintExplicitDeviceTitles'),sum('evaluatedCandidates')),
    meanPotentialFingerprintLinks:mean('fingerprintLinkedTitles'),
    meanPotentialNewPlotLinks:mean('fingerprintNewPlotLinks'),
+   fingerprintSynopsisCoverage:ratio(sum('fingerprintWithSynopsis'),sum('evaluatedCandidates')),
+   fingerprintCreatorCoverage:ratio(sum('fingerprintWithCreatorCredit'),sum('evaluatedCandidates')),
+   fingerprintKeywordCoverage:ratio(sum('fingerprintWithMappedKeywords'),sum('evaluatedCandidates')),
+   fingerprintRawKeywordCoverage:ratio(sum('fingerprintWithOriginalKeywords'),sum('evaluatedCandidates')),
+   fingerprintAnyPlotClueCoverage:ratio(sum('fingerprintWithPlotClues'),sum('evaluatedCandidates')),
    multiSignalEligibleShare:ratio(sum('multiSignalEligible'),sum('qualified')),
    meanDistinctGenresFirstFive:mean('topGenres'),
    meanDistinctPositiveLogAnchorsFirstFive:mean('topAnchors'),
@@ -167,12 +172,20 @@
     // SHADOW DIAGNOSTICS ONLY: do not add these tags to scored entries.
     // A shared literal synopsis phrase is not a verified stylistic fit.
     const fpSummary={fingerprintExtraPlotTitles:0,fingerprintExplicitDeviceTitles:0,
-     fingerprintLinkedTitles:0,fingerprintNewPlotLinks:0};
+     fingerprintLinkedTitles:0,fingerprintNewPlotLinks:0,
+     fingerprintWithSynopsis:0,fingerprintWithCreatorCredit:0,
+     fingerprintWithMappedKeywords:0,fingerprintWithOriginalKeywords:0,
+     fingerprintWithPlotClues:0};
     if(fingerprint?.build&&fingerprint?.compare){
      const sourceItems=complete.filter(x=>["Loved","Liked"].includes(ratings[x.key]));
      const sourceFp=sourceItems.map(x=>({entry:x,fp:fingerprint.build(x)}));
      for(const candidate of candidateFeatures){
       const current=fingerprint.build(candidate);
+      if(current.sourceEvidence.hasSynopsis)fpSummary.fingerprintWithSynopsis++;
+      if(current.sourceEvidence.hasCredits)fpSummary.fingerprintWithCreatorCredit++;
+      if(current.sourceEvidence.hasMappedKeywords)fpSummary.fingerprintWithMappedKeywords++;
+      if(current.sourceEvidence.hasOriginalKeywordNames)fpSummary.fingerprintWithOriginalKeywords++;
+      if(current.sourceEvidence.hasLiteralPlotClues)fpSummary.fingerprintWithPlotClues++;
       const baseKnown=new Set((candidate.facets?.narrativeThemes||[]).map(x=>String(x).toLowerCase()));
       const extra=current.synopsisClues.plotTopics.values.filter(x=>!baseKnown.has(x));
       if(extra.length)fpSummary.fingerprintExtraPlotTitles++;
