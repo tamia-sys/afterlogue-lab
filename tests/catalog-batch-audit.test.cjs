@@ -114,3 +114,27 @@ test('fingerprint enriches structural audit in shadow mode without altering rank
  assert.equal(updated.fingerprintRawKeywordUnqualifiedTitles>=0,true);
  assert.equal(updated.candidateAccounting,'reconciled');
 });
+
+test('optional disliked-film shadow controls cannot change ranking or eligibility',async()=>{
+ const opts=fixtures(),profile={...opts.profiles[0],
+  negativeControls:['Test Film 38','A deliberately unresolvable film title']};
+ const base=await audit.run({...opts,profiles:[opts.profiles[0]],maxPlans:1,maxCandidates:15,
+  keywordAudit,fingerprint});
+ const contrast=await audit.run({...opts,profiles:[profile],maxPlans:1,maxCandidates:15,
+  keywordAudit,fingerprint});
+ const a=base.profiles[0],b=contrast.profiles[0];
+ assert.equal(a.qualified,b.qualified);
+ assert.equal(a.firstShelfComplete,b.firstShelfComplete);
+ assert.equal(a.secondShelfComplete,b.secondShelfComplete);
+ assert.equal(a.topGenres,b.topGenres);
+ assert.equal(a.topAnchors,b.topAnchors);
+ assert.equal(a.evaluatedCandidates,b.evaluatedCandidates);
+ assert.equal(a.duplicateViolations,b.duplicateViolations);
+ assert.equal(a.ratedTitleViolations,b.ratedTitleViolations);
+ assert.equal(b.keywordNegativeAnchors,2); // one original fictional dislike + one shadow control
+ assert.equal(b.keywordShadowNegativesUnresolved,1);
+ assert.ok(b.metadataRequested>=a.metadataRequested);
+ assert.equal(contrast.summary.keywordNegativeControlProfiles,1);
+ assert.equal(contrast.summary.keywordShadowNegativesUnresolved,1);
+ assert.ok(!JSON.stringify(contrast).includes('Test Film 38'));
+});
