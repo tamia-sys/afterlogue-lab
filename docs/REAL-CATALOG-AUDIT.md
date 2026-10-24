@@ -57,6 +57,25 @@ The prior Lab client tried to save an event named pipeline_audit, but the Supaba
 
 A fresh browser run is still required to verify the revised telemetry writes end to end. The new opt-in catalog batch audit makes no telemetry writes: it displays and exports its result locally.
 
+## Score calibration from voluntary Lab reactions
+
+A separate, experimental **score-calibration** line now appears below the recommendation shelf after an attraction decision. It freezes each film's match score **at display time**, then compares two different subsequent responses:
+
+- Interested
+- Not drawn to it
+
+The line shows mean scores for each reaction and a descriptive pairwise AUC (the fraction of interested-vs-passed film pairs where the interested film received a higher score, counting ties as half). AUC is unavailable until both groups have at least one response. It also identifies explicitly marked new-and-interesting films without assuming an unmarked film is unfamiliar.
+
+The result is **not** a calibrated viewing probability, statistical significance claim, measurement of enjoyment after watching, or evidence of unseen films being uninteresting. This is a small voluntary session sample and an internal diagnostic only.
+
+Read-only review of prior lab events from the latest v2.1 experiment (run 2) found **5 Interested responses averaging score 29.58** versus **3 Not drawn to it responses averaging 30.87**; 12 other displayed films had no attraction decision. These 8 decisions are insufficient to prove a general performance deficit, but they directly motivate measuring score-interest alignment rather than maximizing similarity scores.
+
+No database schema, Supabase Edge Functions, user history, or live Afterlogue recommendation behavior was modified. The score calibration and five-persona public catalog audit are entirely within the separate Lab frontend.
+
+Test the new feature with:
+
+    node --test tests/interest-calibration.test.cjs tests/catalog-batch-page.test.cjs
+
 ## Test
 
     node --test tests/catalog-batch-audit.test.cjs tests/catalog-batch-page.test.cjs
