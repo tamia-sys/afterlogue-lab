@@ -34,6 +34,17 @@
   return {profilesAttempted:rows.length,profilesCompleted:successes.length,profilesFailed:rows.length-successes.length,
    meanUniqueRetrieved:mean('uniqueRetrieved'),meanEvaluatedCandidates:mean('evaluatedCandidates'),
    meanQualifiedCandidates:mean('qualified'),firstShelfCompletionRate:ratio(sum('firstShelfComplete'),successes.length),
+   candidateQualificationRate:ratio(sum('qualified'),sum('evaluatedCandidates')),
+   meanLowScoreRejections:mean('lowScoreRejections'),
+   meanMissingEvidenceRejections:mean('missingEvidenceRejections'),
+   meanUnanchoredRejections:mean('unanchoredRejections'),
+   meanOtherRejections:mean('otherRejections'),
+   linkedOnlyYield:ratio(sum('qualifiedLinkedOnly'),sum('evaluatedLinkedOnly')),
+   browseOnlyYield:ratio(sum('qualifiedBrowseOnly'),sum('evaluatedBrowseOnly')),
+   sharedRouteYield:ratio(sum('qualifiedBoth'),sum('evaluatedBoth')),
+   noBestEvidenceTypeCount:sum('bestEvidenceNone'),
+   oneBestEvidenceTypeCount:sum('bestEvidenceSingle'),
+   multipleBestEvidenceTypeCount:sum('bestEvidenceMultiple'),
    secondShelfCompletionRate:ratio(sum('secondShelfComplete'),successes.length),
    metadataReturnRate:ratio(sum('metadataReturned'),sum('metadataRequested')),
    candidateThemeCoverage:ratio(sum('candidateThemes'),sum('evaluatedCandidates')),
@@ -116,8 +127,33 @@
     try{metadata=await features(keys)}catch(err){metadataFailures++}
     if(shouldCancel())break;
     const complete=[...enrich(sources,metadata),...enrich(candidates,metadata)];
-    const scored=cinematic.rank(engine.rank({entries:complete,category:'movies',impressions:ratings}),complete,ratings);
+    const legacyRanked=engine.rank({entries:complete,category:'movies',impressions:ratings});
+    const scored=cinematic.rank(legacyRanked,complete,ratings);
     const eligible=policy.eligible(scored,{ratedKeys:[...rated]});
+    const eligibleKeys=new Set(eligible.map(x=>x.key));
+    const funnel={lowScoreRejections:0,missingEvidenceRejections:0,
+     unanchoredRejections:0,otherRejections:0};
+    for(const item of scored){
+     if(rated.has(item.key)||eligibleKeys.has(item.key))continue;
+     if(!(Number(item.score)>0))funnel.lowScoreRejections++;
+     else if(!(Number(item.cinematicSignalCount)>=1))funnel.missingEvidenceRejections++;
+     else if(!(item.personalized===true&&Array.isArray(item.matched)&&item.matched.length>0) &&
+      !(item.cinematicIndependent===true&&Number(item.cinematicAnchorCount)>=1))
+      funnel.unanchoredRejections++;
+     else funnel.otherRejections++;
+    }
+    const routes={evaluatedLinkedOnly:0,evaluatedBrowseOnly:0,evaluatedBoth:0,
+     qualifiedLinkedOnly:0,qualifiedBrowseOnly:0,qualifiedBoth:0};
+    for(const item of candidates){
+     const from=origins.get(item.key)||new Set();
+     const suffix=from.has('title-linked')&&from.has('independent-browse')?'Both':
+      from.has('independent-browse')?'BrowseOnly':'LinkedOnly';
+     routes['evaluated'+suffix]++;
+     if(eligibleKeys.has(item.key))routes['qualified'+suffix]++;
+    }
+    const bestEvidenceNone=eligible.filter(x=>!(x.cinematicSignalCount>=1)).length;
+    const bestEvidenceSingle=eligible.filter(x=>x.cinematicSignalCount===1).length;
+    const bestEvidenceMultiple=eligible.filter(x=>x.cinematicSignalCount>=2).length;
     const arranged=anchorBalance.balance(engine.balanceShelves({
       entries:eligible,profileEntries:complete,impressions:ratings,category:'movies',size:5
     }),5);
@@ -133,13 +169,19 @@
      candidateTones:candidateFeatures.filter(x=>has(facetsOf(x),'tones')).length,
      candidatePlot:candidateFeatures.filter(x=>has(facetsOf(x),'narrativeThemes')).length,
      candidateDirector:candidateFeatures.filter(x=>has(facetsOf(x),'directors')).length,
-     qualified:eligible.length,multiSignalEligible:eligible.filter(x=>x.cinematicSignalCount>=2).length,
+     qualified:eligible.length,multiSignalEligible:bestEvidenceMultiple,
      synopsisOnlyEligible:eligible.filter(x=>x.cinematicSynopsisOnly).length,
+     legacyPositive:legacyRanked.filter(x=>x.score>0).length,
+     bestEvidenceNone,bestEvidenceSingle,bestEvidenceMultiple,...funnel,...routes,
      firstShelfComplete:Number(top.length===5),secondShelfComplete:Number(next.length===5),
      topGenres:unique(top.flatMap(x=>facetsOf(x).genres||[])).length,
      topAnchors:unique(top.map(x=>x.cinematicAnchor).filter(Boolean)).length,
      duplicateViolations:selectedKeys.length-unique(selectedKeys).length,
      ratedTitleViolations:selectedKeys.filter(key=>rated.has(key)).length,
+     candidateAccounting:eligible.length+Object.values(funnel).reduce((a,b)=>a+b,0)===candidates.length?'reconciled':'mismatch',
+     diagnosticHint:candidates.length<5?'candidate-supply':metadata.size<keys.length/2?
+      'metadata-request-coverage':eligible.length<5?'eligibility-coverage':
+      bestEvidenceMultiple===0?'single-signal-evidence':'no-obvious-structural-blocker',
      note:'Structural public catalog result only; no empirical viewer-interest label'};
     reports.push(row);
    }catch(err){reports.push({profile:profile.name,error:String(err?.message||err).slice(0,180)})}
@@ -153,6 +195,8 @@
     'This bounded QA retrieval differs from the full interactive Lab retrieval plan.',
     'Coverage, diversity and eligibility do not establish movie appeal or individual psychological preference.',
     'Missing film metadata is unknown rather than negative taste evidence.',
+   'Candidate rejection categories are exclusive but diagnostic, not a causal explanation for taste.',
+   'Source-specific yields are based on this bounded sample, not global TMDB search relevance.',
     'No private Log, real member ID, or user interest responses were accessed.']};
  }
  return Object.freeze({run,summarize,chooseAnchors});
