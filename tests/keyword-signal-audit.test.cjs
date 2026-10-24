@@ -62,6 +62,7 @@ test('shadow disliked films identify negative-only and conflicting specific evid
  const result=audit.inspect({
   positive:[film('loved','train station','montage')],
   negative:[film('not-for-me','train station','remote island')],
+  qualifiedKeys:new Set(['film-mixed','film-negative-only']),
   candidates:[
    film('positive-only','montage'),
    film('negative-only','remote island'),
@@ -75,6 +76,11 @@ test('shadow disliked films identify negative-only and conflicting specific evid
  assert.equal(result.candidatesWithNegativeOnly,1);
  assert.equal(result.candidatesWithMixedPositiveNegative,2);
  assert.equal(result.candidatesWithSpecificNegativeOverlap,1);
+ assert.equal(result.candidatesWithDifferentLabelConflict,1);
+ assert.equal(result.qualifiedCandidates,2);
+ assert.equal(result.qualifiedWithMixedEvidence,1);
+ assert.equal(result.qualifiedWithNegativeOnly,1);
+ assert.equal(result.qualifiedWithExactKeywordConflict,0);
  assert.equal(result.negativeControlAvailable,true);
  assert.equal(result.candidates,5);
 });
