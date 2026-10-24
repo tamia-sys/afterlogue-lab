@@ -16,7 +16,7 @@ permissions:
   contents: write
 concurrency:
   group: afterlogue-real-catalog-smoke
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   catalog-smoke:
     runs-on: ubuntu-latest
