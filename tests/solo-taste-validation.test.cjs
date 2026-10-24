@@ -110,3 +110,34 @@ test('individual results are aggregate-only: never return raw keys, ratings or i
   assert.equal(s.includes(key),false);
  assert.equal(s.includes('Love'),false);
 });
+
+test('older preferences remain supported after a burst of recent similar suggested titles',()=>{
+ const now=Date.parse('2026-10-24T18:00:00Z');
+ const historyDates=Object.fromEntries(
+  ['quiet-a','quiet-b','quiet-c'].map(k=>[k,'2023-03-01T00:00:00Z'])
+ );
+ const newerDates=Object.fromEntries(Array.from({length:10},(_,i)=>
+  ['suggested-animation-'+i,'2026-10-23T00:00:00Z']));
+ const appended=Object.fromEntries(Object.keys(newerDates).map(k=>[k,'Loved']));
+ const outcome=qa.stability({engine,entries:sources,baseline:ratings,
+  additional:appended,timestamps:{...historyDates,...newerDates},now,
+  probes:['quiet-unseen','suggested-animation-11']});
+ assert.equal(outcome.previouslySupportedProbesStillSupported,
+  outcome.probesWithPreviousEvidence);
+ assert.equal(outcome.previouslySupportedProbesWithDecreasingScore,0);
+});
+test('real sustained animation preference can still be learned when the person repeatedly Loves animation',()=>{
+ const animationLoves=Object.fromEntries(Array.from({length:10},(_,i)=>
+  ['suggested-animation-'+i,'Loved']));
+ const onlyAnimated=engine.buildTasteProfile({entries:sources,impressions:animationLoves});
+ const animationProbe=sources.find(x=>x.key==='suggested-animation-11');
+ const quietProbe=sources.find(x=>x.key==='quiet-unseen');
+ assert.ok(engine.tasteMatch(onlyAnimated,animationProbe.facets).score>
+  engine.tasteMatch(onlyAnimated,quietProbe.facets).score);
+});
+test('object-valued Map impressions are accepted, never silently skipped',()=>{
+ const recordMap=new Map(Object.entries(ratings).map(([key,rating])=>[key,{rating}]));
+ const outcome=qa.evaluate({engine,entries:sources,impressions:recordMap});
+ assert.equal(outcome.historyRated,5);
+ assert.equal(outcome.comparableHeldoutPairs,6);
+});
