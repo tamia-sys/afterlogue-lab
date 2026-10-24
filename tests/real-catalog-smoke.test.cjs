@@ -31,7 +31,7 @@ test('public adapter uses only credential-free POST and reports bounded metadata
    case 'lab-browse':response={items:films.slice(12,35)};break;
    case 'taste-features':response={items:payload.keys.map(key=>({
     key,genres:['drama'],themes:['solitude','memory'],tones:['reflective'],
-    directors:['tmdb-person-999'],writers:[]}))};break;
+    directors:['tmdb-person-999'],writers:[],keywordNames:['train station','longing']}))};break;
    default:throw Error('Unexpected method '+payload.mode);
   }
   return {ok:true,text:async()=>JSON.stringify(response)};
@@ -43,8 +43,9 @@ test('public adapter uses only credential-free POST and reports bounded metadata
  assert.ok(e.synopsis);
  assert.ok(e.facets.narrativeThemes.includes('solitude'));
  const enriched=transport.enrich([e],new Map([[e.key,{genres:['drama'],themes:['solitude'],
-  tones:['reflective'],directors:['tmdb-person-999'],writers:[]}]]));
+  tones:['reflective'],directors:['tmdb-person-999'],writers:[],keywordNames:['train station']}]]));
  assert.deepEqual(enriched[0].facets.directors,['tmdb-person-999']);
+ assert.deepEqual(enriched[0].facets.keywordNames,['train station']);
  const result=await execute({profileLimit:1,candidates:18,plans:1},{fetchImpl,timeoutMs:2000});
  assert.equal(result.kind,'afterlogue-public-catalog-smoke-v1');
  assert.equal(result.summary.profilesCompleted,1);
@@ -52,6 +53,8 @@ test('public adapter uses only credential-free POST and reports bounded metadata
  assert.equal(result.profiles[0].countReconciled,true);
  assert.ok(result.provider.requests>=4);
  assert.ok(inputs.some(x=>x.mode==='taste-features'));
+ assert.ok(result.summary.fingerprintRawKeywordCoverage>0);
+ assert.ok(result.profiles[0].withOriginalKeywords>0);
  assert.ok(inputs.every(x=>!('user_id' in x)&&!('rating' in x)&&!('email' in x)));
  assert.equal(JSON.stringify(result).includes('Catalog Test'),false);
 });
