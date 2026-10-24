@@ -36,6 +36,14 @@ button:hover:not(:disabled){border-color:var(--gold)}
 <button id="again" disabled>Discover again</button>
 <button id="export-audit" disabled>Export diagnostic snapshot</button>
 </div>
+<section class="panel" aria-labelledby="batch-title">
+<h2 id="batch-title">Real-catalog batch audit</h2>
+<p class="muted">Run one bounded check across all five fictional viewer histories at the selected viewing-session phase, using the lab's real public catalog provider. It records candidate retrieval, missing metadata, ranking eligibility, and shelf diversity. No account data or film ratings are sent.</p>
+<div class="controls"><button id="run-batch" class="primary">Audit five fictional viewers</button><button id="cancel-batch" disabled>Stop audit</button><button id="export-batch" disabled>Export batch report</button></div>
+<p id="batch-status" role="status" aria-live="polite" class="muted">No batch audit has been run in this browser session.</p>
+<div id="batch-output"></div>
+<p class="muted" style="font-size:12px">This bounded QA sample uses fewer seed requests than the interactive five-film generator. Results evaluate public metadata and rule consistency, not real viewer enjoyment. Catalog requests may be rate-limited.</p>
+</section>
 <p class="muted" style="font-size:12px">Diagnostic export contains only public film metadata and the selected fictional viewing history. It contains no Afterlogue account information. Use it to compare the same candidate pool across ranking versions.</p>
 <p id="status" role="status" aria-live="polite"></p><p class="muted" style="font-size:12px">Private feedback: <strong id="save-state">Connecting…</strong> · Test code: <code id="test-code"></code>. Saves fictional viewer labels, film batches and button choices only—not your Afterlogue account or personal Log.</p>
 <section><div class="eyebrow">The viewer's history</div><h2 id="profile-name"></h2><p id="profile-note" class="muted"></p><div id="history" class="pills"></div></section>
@@ -48,6 +56,7 @@ button:hover:not(:disabled){border-color:var(--gold)}
 <script src="narrative-signals.js?v=topics-1"></script>
 <script src="evidence-balance.js?v=anchors-1"></script>
 <script src="taste-model-v2.js?v=topics-1"></script>
+<script src="catalog-batch-audit.js?v=real-catalog-1"></script>
 <script>
 (()=>{
 "use strict";
@@ -86,7 +95,7 @@ if(!eligibility)throw Error("Recommendation eligibility policy failed to load.")
  }
  $("save-state").textContent="Ready to save";
 
-const cache=new Map();let pool=[],seen=new Set(),page=0,runToken=0;const attraction=new Map(),familiarity=new Map(),trailerPass=new Set(),newDiscovery=new Map(),watchIntent=new Map();let allRanked=[],profileEntries=[],ratingSignals={},retrievalRound=0,fetchingMore=false;
+const cache=new Map();let batchRunning=false,batchCancelled=false,batchReport=null;let pool=[],seen=new Set(),page=0,runToken=0;const attraction=new Map(),familiarity=new Map(),trailerPass=new Set(),newDiscovery=new Map(),watchIntent=new Map();let allRanked=[],profileEntries=[],ratingSignals={},retrievalRound=0,fetchingMore=false;
 let deferredCatalog=new Map();
 profiles.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.name;$("persona").append(o)});
 function history(){const p=profiles[Number($("persona").value)],phase=Number($("phase").value);return [...p.base,...(phase>0?p.changes:[]),...(phase>1?p.later:[])];}
@@ -584,6 +593,83 @@ function exportDiagnosticSnapshot(){
  link.href=url;link.download="afterlogue-lab-v2-1-"+String($("persona").value)+"-"+String($("phase").value)+".json";
  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
 }
+
+function renderBatchAudit(report){
+ const target=$("batch-output");target.replaceChildren();
+ const summary=report.summary;
+ const p=document.createElement("p");
+ p.className="stats";
+ p.textContent=summary.profilesCompleted+"/"+summary.profilesAttempted+" profiles completed · "+
+  Math.round(summary.firstShelfCompletionRate*100)+"% had 5 qualified films · "+
+  Math.round(summary.secondShelfCompletionRate*100)+"% had 10 · "+
+  summary.meanQualifiedCandidates.toFixed(1)+" mean qualified candidates · "+
+  Math.round(summary.candidateThemeCoverage*100)+"% candidate theme coverage · "+
+  Math.round(summary.candidateToneCoverage*100)+"% tone coverage · "+
+  summary.ratedTitleViolations+" rated-title violations · "+summary.duplicateViolations+" duplicates";
+ target.append(p);
+ const table=document.createElement("table");
+ table.style.cssText="width:100%;border-collapse:collapse;font-size:12px;margin:14px 0";
+ const headers=["Fictional viewer","Retrieved","Evaluated","Qualified","Metadata","Five picks","Independent evidence"];
+ const head=document.createElement("tr");
+ for(const label of headers){const cell=document.createElement("th");cell.textContent=label;cell.style.cssText="text-align:left;padding:8px;border-bottom:1px solid #49453f";head.append(cell)}
+ table.append(head);
+ for(const row of report.profiles){
+  const data=row.error?[row.profile,"—","—","—","Error","No",row.error]:
+   [row.profile,row.uniqueRetrieved,row.evaluatedCandidates,row.qualified,
+   row.metadataReturned+"/"+row.metadataRequested,row.firstShelfComplete?"Yes":"No",
+   row.multiSignalEligible+"/"+row.qualified+" qualified"];
+  const line=document.createElement("tr");
+  for(const value of data){const cell=document.createElement("td");cell.textContent=String(value);cell.style.cssText="padding:8px;border-bottom:1px solid #49453f;vertical-align:top";line.append(cell)}
+  table.append(line);
+ }
+ const wrapper=document.createElement("div");wrapper.style.overflowX="auto";wrapper.append(table);target.append(wrapper);
+ const caveat=document.createElement("p");caveat.className="muted";
+ caveat.style.fontSize="12px";caveat.textContent="This is public film-catalog structural evidence, not a prediction accuracy score. The report does not include member Logs or film-by-film private responses.";
+ target.append(caveat);
+}
+$("run-batch").addEventListener("click",async()=>{
+ if(batchRunning||$("run").disabled||fetchingMore)return;
+ batchRunning=true;batchCancelled=false;batchReport=null;
+ $("run-batch").disabled=true;$("cancel-batch").disabled=false;$("export-batch").disabled=true;
+ $("run").disabled=true;$("again").disabled=true;
+ $("batch-output").replaceChildren();
+ const phase=Number($("phase").value),histories=profiles.map(p=>({
+  name:p.name,history:[...p.base,...(phase>0?p.changes:[]),...(phase>1?p.later:[])]
+ }));
+ try{
+  const report=await window.AfterlogueCatalogBatchAudit.run({
+   profiles:histories,api,resolveTitle,toEntry,features,enrich,engine,
+   cinematic:window.AfterlogueTasteV2,policy:eligibility,
+   anchorBalance:window.AfterlogueAnchorBalance,
+   maxPlans:4,maxCandidates:60,
+   shouldCancel:()=>batchCancelled,
+   onProgress:progress=>{
+    $("batch-status").textContent=progress.stage+" — "+progress.name+
+     " ("+progress.current+"/"+progress.total+")";
+   }
+  });
+  batchReport=report;renderBatchAudit(report);
+  $("export-batch").disabled=false;
+  $("batch-status").textContent=report.cancelled?"Audit stopped. Partial report available.":
+   "Audit complete — "+report.summary.profilesCompleted+" fictional histories evaluated using public catalog records.";
+ }catch(error){$("batch-status").textContent="Batch audit could not finish: "+String(error.message||error)}
+ finally{
+  batchRunning=false;$("run-batch").disabled=false;$("cancel-batch").disabled=true;
+  $("run").disabled=false;$("again").disabled=!allRanked.length;
+ }
+});
+$("cancel-batch").addEventListener("click",()=>{
+ batchCancelled=true;$("cancel-batch").disabled=true;
+ $("batch-status").textContent="Stop requested. Any completed profiles will remain in the report.";
+});
+$("export-batch").addEventListener("click",()=>{
+ if(!batchReport)return;
+ const file=new Blob([JSON.stringify(batchReport,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(file),a=document.createElement("a");
+ a.href=url;a.download="afterlogue-real-catalog-batch-audit.json";
+ document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+});
+
 $("export-audit").addEventListener("click",exportDiagnosticSnapshot);
 $("run").addEventListener("click",generate);$("again").addEventListener("click",discoverAgain);renderHistory();
 })();
