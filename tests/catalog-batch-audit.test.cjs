@@ -7,6 +7,7 @@ const engine=globalThis.AfterlogueRecommendationEngine;
 const cinematic=require('../taste-model-v2.js'),policy=require('../eligibility-policy.js');
 const anchorBalance=require('../evidence-balance.js');
 const fingerprint=require('../cinematic-fingerprint.js');
+const keywordAudit=require('../keyword-signal-audit.js');
 function fixtures(){
  const films=Array.from({length:38},(_,i)=>({id:i+1,title:'Test Film '+(i+1),
   poster:'https://example.invalid/poster/'+(i+1),media:'movie',
@@ -92,7 +93,7 @@ test('fingerprint enriches structural audit in shadow mode without altering rank
  const options=fixtures();
  const baseline=await audit.run({...options,profiles:options.profiles.slice(0,1),maxPlans:2,maxCandidates:24});
  const extended=await audit.run({...options,profiles:options.profiles.slice(0,1),
-  maxPlans:2,maxCandidates:24,fingerprint});
+  maxPlans:2,maxCandidates:24,fingerprint,keywordAudit});
  const old=baseline.profiles[0],updated=extended.profiles[0];
  assert.equal(old.qualified,updated.qualified);
  assert.equal(old.firstShelfComplete,updated.firstShelfComplete);
@@ -104,6 +105,11 @@ test('fingerprint enriches structural audit in shadow mode without altering rank
  assert.ok(extended.summary.fingerprintExtraPlotClueCoverage>0);
  assert.ok(updated.fingerprintRawKeywordLinkedTitles>0);
  assert.ok(extended.summary.fingerprintRawKeywordLinkCoverage>0);
+ assert.equal(extended.profiles[0].keywordRawLinks>0,true);
+ assert.equal(extended.profiles[0].keywordSpecificLinks,0);
+ assert.ok(extended.profiles[0].keywordGenericOnly>0);
+ assert.equal(extended.profiles[0].keywordNegativeAnchors,1);
+ assert.equal(old.qualified,updated.qualified);
  assert.equal(old.qualified,updated.qualified);
  assert.equal(updated.fingerprintRawKeywordUnqualifiedTitles>=0,true);
  assert.equal(updated.candidateAccounting,'reconciled');
