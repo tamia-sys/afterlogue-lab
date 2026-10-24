@@ -14,10 +14,10 @@ test('live Lab-only page loads optional public-catalog batch auditor and has ope
  assert.match(html,/shouldCancel:\(\)=>batchCancelled/);
 });
 test('feedback calibration uses the score frozen at first display',()=>{
- assert.match(html,/<script src="interest-calibration\\.js\\?v=calibration-1"><\\/script>/);
- assert.match(html,/displayedScores\\.set\\(item\\.key,Number\\(item\\.score\\)\\)/);
- assert.match(html,/AfterlogueInterestCalibration\\.summarize\\(/);
- assert.match(html,/displayedScores\\.clear\\(\\)/);
+ assert.match(html,/<script src="interest-calibration\.js\?v=calibration-1"><\/script>/);
+ assert.match(html,/displayedScores\.set\(item\.key,Number\(item\.score\)\)/);
+ assert.match(html,/AfterlogueInterestCalibration\.summarize\(/);
+ assert.match(html,/displayedScores\.clear\(\)/);
  assert.match(html,/id="score-calibration"/);
 });
 test('inline browser script parses; audit does not change the production website',()=>{
