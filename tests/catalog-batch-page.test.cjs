@@ -3,10 +3,13 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 test('live Lab-only page loads optional public-catalog batch auditor and has operational controls',()=>{
- assert.match(html,/<script src="catalog-batch-audit\.js\?v=real-catalog-1"><\/script>/);
+ assert.match(html,/<script src="catalog-batch-audit\.js\?v=real-catalog-2"><\/script>/);
  for(const id of ['run-batch','cancel-batch','export-batch','batch-status','batch-output'])
   assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1);
  assert.match(html,/AfterlogueCatalogBatchAudit\.run\(/);
+ assert.match(html,/meanMissingEvidenceRejections/);
+ assert.match(html,/qualifiedBrowseOnly/);
+ assert.match(html,/candidateAccounting/);
  assert.match(html,/renderBatchAudit\(report\)/);
  assert.match(html,/shouldCancel:\(\)=>batchCancelled/);
 });
