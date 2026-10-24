@@ -109,6 +109,48 @@
    }
    if(conflict)filmsWithConflict++;
   }
+  // Cohen's kappa is only meaningful here for exactly TWO reviewers.
+  // Keep all reviewer codes, film labels and source notes out of the result.
+  // A six-overlap gate is a minimal computability guard, NOT a claim of
+  // statistical precision or that the observed descriptions are true.
+  const reliability={};
+  for(const dim of dimensions){
+   const paired=[];
+   if(reviewers.size===2){
+    for(const records of perFilm.values()){
+     if(records.length!==2)continue;
+     const ordered=[...records].sort((a,b)=>a.reviewerCode.localeCompare(b.reviewerCode));
+     const left=ordered[0].values[dim],right=ordered[1].values[dim];
+     if(left&&right)paired.push([left,right]);
+    }
+   }
+   const count=paired.length;
+   const distinctLeft=new Set(paired.map(p=>p[0])).size,
+         distinctRight=new Set(paired.map(p=>p[1])).size;
+   let status=reviewers.size!==2?"two-reviewers-required":
+    count<6?"insufficient-overlap":
+    distinctLeft<2||distinctRight<2?"no-category-variation":"exploratory";
+   let chanceExpected=null,kappa=null;
+   if(status==="exploratory"){
+    const categories=new Set(paired.flat());
+    const expected=[...categories].reduce((total,label)=>
+      total+paired.filter(p=>p[0]===label).length/count*
+            (paired.filter(p=>p[1]===label).length/count),0);
+    if(expected>=1-1e-12)status="expected-agreement-saturated";
+    else{
+     const observed=paired.filter(p=>p[0]===p[1]).length/count;
+     chanceExpected=expected;
+     kappa=(observed-expected)/(1-expected);
+    }
+   }
+   reliability[dim]={status,overlappingFilms:count,
+    labelsUsedByFirstReviewer:distinctLeft,
+    labelsUsedBySecondReviewer:distinctRight,
+    expectedChanceAgreement:chanceExpected,cohensKappa:kappa};
+  }
+  const estimatedDimensions=Object.values(reliability).filter(x=>x.status==="exploratory").length;
+  const reliabilityStatus=reviewers.size!==2?"two-reviewers-required":
+    estimatedDimensions?"exploratory-only":"insufficient-overlap-or-variation";
   return {
    format:"afterlogue-editorial-pilot-aggregate-v1",
    reviewedFilmCount:perFilm.size,slateCount:slate.length,
@@ -118,8 +160,9 @@
    comparedDimensionPairs:pairedDimensions,
    agreementPairs:matches,disagreementPairs:disagreements,
    observedPairAgreement:pairedDimensions?matches/pairedDimensions:null,
-   dimensions:metrics,
-   note:"This is reviewer agreement about originally authored observations, not film truth or viewer preference. Unreviewed films/dimensions stay unknown; no data was uploaded."
+   dimensions:metrics,reliability,reliabilityStatus,
+   kappaEstimatedDimensions:estimatedDimensions,
+   note:"Agreement on originally authored observations is not truth or film preference. Chance-adjusted kappa is EXPLORATORY ONLY for exactly two independent reviewers, at least six overlapping films with variable labels in each dimension. Small samples remain uncertain. Unknown stays unknown; no data was uploaded."
   };
  }
  return Object.freeze({slate,makePacket,compare});
