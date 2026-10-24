@@ -27,11 +27,11 @@ test('stronger multi-label overlaps are still community hints, not independent f
 });
 test('negative-anchor collisions are separately flagged, never automatically excluded',()=>{
  const result=audit.inspect({
-  positive:[film('a','train station','family')],
+  positive:[film('a','train station','family','secret lighthouse')],
   negative:[film('x','train station')],
-  candidates:[film('b','train station'),film('c','family'),film('d','train station','family')]});
+  candidates:[film('b','train station'),film('c','family'),film('d','secret lighthouse')]});
  assert.equal(result.candidatesWithSpecificOverlap,2);
- assert.equal(result.candidatesWithSpecificNegativeOverlap,2);
+ assert.equal(result.candidatesWithSpecificNegativeOverlap,1);
  assert.equal(result.candidatesWithRawPositiveOverlap,3);
 });
 test('absent keyword lists are unknown, not evidence against movies or people',()=>{
