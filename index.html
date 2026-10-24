@@ -335,6 +335,9 @@ async function retrieveNextBatch(){
   const offset=(retrievalRound*53)%Math.max(1,allFresh.length);
   const sampled=[...allFresh.slice(offset),...allFresh.slice(0,offset)].slice(0,120);
   const candidates=sampled.map((item,i)=>toEntry(item,800+retrievalRound*200+i));
+  const pending=[...new Set(profileEntries.filter(x=>!ratingSignals[x.key]&&!seen.has(x.key)).map(x=>x.key))];
+  // Already retrieved but never displayed is NOT a repeat. Include these
+  // candidates in subsequent ranking rather than discarding a useful backlog.
   const summary="Retrieval "+retrievalRound+": "+(browseItems.length?"independent Discover bridge ("+(browse.audit?.plans||0)+" pages)":"fallback title recommendations ("+uniquePlans.length+" plans)")+" · "+
    returned+" results · "+invalid+" invalid · "+withinRound+" repeated within responses · "+
    previouslyKnown+" already in pool · "+freshTotal+" genuinely new ("+candidates.length+" evaluated) · "+failed+" failed requests";
@@ -350,9 +353,9 @@ async function retrieveNextBatch(){
   profileEntries=[...profileEntries,...enriched];
   const ranked=cinematicRerank(engine.rank({entries:profileEntries,category:"movies",impressions:ratingSignals}));
   allRanked=ranked;
-  const freshKeys=new Set(enriched.map(x=>x.key));
-  // Rank against the entire Log, then restrict the selection to genuinely fresh
-  // candidates. Preserve the existing feedback and balanced five-film shelf.
+  const freshKeys=new Set([...enriched.map(x=>x.key),...pending]);
+  // Rank against the entire Log, selecting never-shown candidates from
+  // both new retrieval and the previously unused candidate backlog.
   const preBalance=ranked.filter(x=>freshKeys.has(x.key)&&!seen.has(x.key)&&!attraction.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
   const qualified=feedbackAdjustedPool(freshKeys);
   const strongCount=qualified.filter(x=>x.cinematicSignalCount>=2).length;
@@ -379,8 +382,8 @@ async function retrieveNextBatch(){
    return;
   }
   showNext(qualified);
-  setStatus("New shelf selected exclusively from "+candidates.length+
-   " fresh candidates, ranked against the full Log. See retrieval audit below.");
+  setStatus("Shelf selected from "+candidates.length+" newly evaluated films and "+pending.length+
+   " previously retrieved but never shown. No displayed film is repeated.");
  }catch(error){setStatus("Fresh retrieval failed: "+(error.message||"catalog unavailable")+". Previous shelf preserved.");}
  finally{if(token===runToken){fetchingMore=false;$("again").disabled=false;}}
 }
