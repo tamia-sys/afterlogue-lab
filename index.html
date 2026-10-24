@@ -58,7 +58,8 @@ button:hover:not(:disabled){border-color:var(--gold)}
 <script src="taste-model-v2.js?v=topics-1"></script>
 <script src="cinematic-fingerprint.js?v=fingerprint-1"></script>
 <script src="keyword-signal-audit.js?v=keyword-specificity-1"></script>
-<script src="catalog-batch-audit.js?v=real-catalog-5"></script>
+<script src="evidence-corroboration.js?v=corroboration-1"></script>
+<script src="catalog-batch-audit.js?v=real-catalog-6"></script>
 <script src="interest-calibration.js?v=calibration-1"></script>
 <script>
 (()=>{
@@ -658,7 +659,9 @@ function renderBatchAudit(report){
     " · "+row.fingerprintRawKeywordLinkedTitles+" community-tag links (shadow)"+
     " · "+row.fingerprintRawKeywordUnqualifiedTitles+" not qualified"+
     " · "+row.keywordSpecificLinks+" locally specific community tags"+
-    " · "+row.keywordGenericOnly+" generic/common-only overlaps",
+    " · "+row.keywordGenericOnly+" generic/common-only overlaps"+
+    " · "+row.corroborationWithIndependentFacet+" same-anchor supported"+
+    " · "+row.corroborationKeywordOnly+" keyword-only",
    "title "+row.qualifiedLinkedOnly+"/"+row.evaluatedLinkedOnly+
     " · browse "+row.qualifiedBrowseOnly+"/"+row.evaluatedBrowseOnly+
     " · both "+row.qualifiedBoth+"/"+row.evaluatedBoth,
@@ -687,6 +690,7 @@ $("run-batch").addEventListener("click",async()=>{
    cinematic:window.AfterlogueTasteV2,policy:eligibility,
    anchorBalance:window.AfterlogueAnchorBalance,fingerprint:window.AfterlogueCinematicFingerprint,
    keywordAudit:window.AfterlogueKeywordSignalAudit,
+   corroboration:window.AfterlogueCorroborationAudit,
    maxPlans:4,maxCandidates:60,
    shouldCancel:()=>batchCancelled,
    onProgress:progress=>{
