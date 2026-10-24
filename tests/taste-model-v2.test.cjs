@@ -63,3 +63,19 @@ test("v2 rank is deterministic for identical input",()=>{
  const candidates=[film("a",{tones:["intimate"]}),film("b",{tones:["playful"]})];
  assert.deepEqual(v2.rank(candidates,log,{one:"Loved"}),v2.rank(candidates,log,{one:"Loved"}));
 });
+
+test("feedback similarities are finite for empty, genre, theme and director facets",()=>{
+ const pairs=[
+  [{},{}],
+  [{genres:["animation"]},{genres:["animation"]}],
+  [{themes:["solitude"]},{themes:["solitude"]}],
+  [{directors:["tmdb-person-2303"]},{directors:["tmdb-person-2303"]}]
+ ];
+ for(const [a,b] of pairs){
+  const value=v2.feedbackSimilarity(a,b);
+  assert.ok(Number.isFinite(value),"feedback similarity must be finite");
+  assert.ok(value>=0);
+ }
+ assert.equal(v2.feedbackSimilarity({},{}),0);
+ assert.equal(v2.feedbackSimilarity({genres:["animation"]},{genres:["animation"]}),.3);
+});
