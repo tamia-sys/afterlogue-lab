@@ -30,6 +30,7 @@ const metrics=[
  'corroborationWithMultipleIndependentKinds','corroborationCrossAnchorOnly',
  'corroborationQualifiedWithIndependentFacet','corroborationQualifiedKeywordOnly',
  'corroborationWithNegativeCollision','corroborationWithNegativeCollisionAndIndependentFacet',
+ 'corroborationWithMixedNegativeEvidence','corroborationWithMixedNegativeEvidenceAndIndependentFacet',
  'meanPotentialFingerprintLinks','meanPotentialNewPlotLinks','multiSignalEligibleShare',
  'linkedOnlyYield','browseOnlyYield','sharedRouteYield',
  'meanMissingEvidenceRejections','meanLowScoreRejections','meanUnanchoredRejections',
@@ -52,6 +53,7 @@ const fields=[
  'independentlyVerifiedCreatorLinks','independentlySupportedSynopsisClues',
  'corroboratedQualifiedLinks','uncorroboratedQualifiedKeywordLinks',
  'corroboratedButDislikeCollision','differentLogAnchorSupportOnly',
+ 'keywordWithMixedNegativeEvidence','corroboratedWithMixedNegativeEvidence',
  'withSynopsis','withCreatorCredit','withMappedKeywords','withOriginalKeywords',
  'withPlotClues','qualifiedTitleLinkedOnly','evaluatedTitleLinkedOnly',
  'qualifiedBrowseOnly','evaluatedBrowseOnly','bestEvidenceSingle','bestEvidenceMultiple'
