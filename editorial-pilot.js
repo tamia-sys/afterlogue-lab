@@ -127,7 +127,7 @@
    const count=paired.length;
    const distinctLeft=new Set(paired.map(p=>p[0])).size,
          distinctRight=new Set(paired.map(p=>p[1])).size;
-   let status=reviewers.size!==2?"two-reviewers-required":
+   let status=reviewers.size!==2?"exactly-two-reviewers-required":
     count<6?"insufficient-overlap":
     distinctLeft<2||distinctRight<2?"no-category-variation":"exploratory";
    let chanceExpected=null,kappa=null;
@@ -149,7 +149,7 @@
     expectedChanceAgreement:chanceExpected,cohensKappa:kappa};
   }
   const estimatedDimensions=Object.values(reliability).filter(x=>x.status==="exploratory").length;
-  const reliabilityStatus=reviewers.size!==2?"two-reviewers-required":
+  const reliabilityStatus=reviewers.size!==2?"exactly-two-reviewers-required":
     estimatedDimensions?"exploratory-only":"insufficient-overlap-or-variation";
   return {
    format:"afterlogue-editorial-pilot-aggregate-v1",
