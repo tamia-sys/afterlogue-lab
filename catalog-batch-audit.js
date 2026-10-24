@@ -67,7 +67,12 @@
    keywordGenericOnlyRate:ratio(sum('keywordGenericOnly'),sum('evaluatedCandidates')),
    keywordMultiLabelRate:ratio(sum('keywordMultiLabel'),sum('evaluatedCandidates')),
    keywordNegativeOverlapRate:ratio(sum('keywordNegativeOverlap'),sum('evaluatedCandidates')),
+   keywordNegativeSpecificRate:ratio(sum('keywordNegativeSpecific'),sum('evaluatedCandidates')),
+   keywordNegativeOnlyRate:ratio(sum('keywordNegativeOnly'),sum('evaluatedCandidates')),
+   keywordPositiveOnlyRate:ratio(sum('keywordPositiveOnly'),sum('evaluatedCandidates')),
+   keywordMixedEvidenceRate:ratio(sum('keywordMixedPositiveNegative'),sum('evaluatedCandidates')),
    keywordNegativeControlProfiles:successes.filter(x=>x.keywordNegativeAnchors>0).length,
+   keywordShadowNegativesUnresolved:sum('keywordShadowNegativesUnresolved'),
    multiSignalEligibleShare:ratio(sum('multiSignalEligible'),sum('qualified')),
    meanDistinctGenresFirstFive:mean('topGenres'),
    meanDistinctPositiveLogAnchorsFirstFive:mean('topAnchors'),
@@ -96,6 +101,18 @@
      {item:res.value,rating:history[n][1]}:null).filter(Boolean);
     if(found.length<2)throw Error('Fewer than two historical films could be resolved');
     const sources=found.map(({item},index)=>toEntry(item,index));
+    // Additional fictional dislikes are resolved solely for shadow analysis.
+    // They must not enter impressions, ranked entries, rated-title exclusions,
+    // candidate retrieval seeds, or persistent member Logs.
+    const controlNames=Array.isArray(profile.negativeControls)?
+      [...new Set(profile.negativeControls.filter(x=>typeof x==='string'&&x.trim().length>=2))]
+       .slice(0,2):[];
+    const controls=await Promise.allSettled(controlNames.map(title=>resolveTitle(title)));
+    if(shouldCancel())break;
+    const negativeControls=controls.filter(x=>x.status==='fulfilled'&&x.value)
+      .map((x,n)=>toEntry(x.value,900+n))
+      .filter(x=>!sources.some(source=>source.key===x.key));
+    const keywordShadowNegativesUnresolved=controlNames.length-negativeControls.length;
     const ratings=Object.fromEntries(found.map(({item,rating})=>['tmdb-movie-'+item.id,rating]));
     const selected=chooseAnchors(found,maxPlans);
     if(!selected.length)throw Error('No positive film anchors');
@@ -140,11 +157,12 @@
     }
     const candidates=mixed.map((item,index)=>toEntry(item,400+index));
     onProgress({current:i+1,total:profiles.length,name:profile.name,stage:'Enriching film metadata'});
-    const keys=unique([...sources,...candidates].map(x=>x.key)),metadataRequested=keys.length;
+    const keys=unique([...sources,...candidates,...negativeControls].map(x=>x.key)),metadataRequested=keys.length;
     let metadata=new Map(),metadataFailures=0;
     try{metadata=await features(keys)}catch(err){metadataFailures++}
     if(shouldCancel())break;
     const complete=[...enrich(sources,metadata),...enrich(candidates,metadata)];
+    const shadowNegativeEnriched=enrich(negativeControls,metadata);
     const legacyRanked=engine.rank({entries:complete,category:'movies',impressions:ratings});
     const scored=cinematic.rank(legacyRanked,complete,ratings);
     const eligible=policy.eligible(scored,{ratedKeys:[...rated]});
@@ -225,7 +243,7 @@
     // Independent SHADOW pass. Both negatives and positives are fictional.
     const keywordStats=(keywordAudit?.inspect)?keywordAudit.inspect({
       positive:complete.filter(x=>["Loved","Liked"].includes(ratings[x.key])),
-      negative:complete.filter(x=>ratings[x.key]==="Not for me"),
+      negative:[...complete.filter(x=>ratings[x.key]==="Not for me"),...shadowNegativeEnriched],
       candidates:candidateFeatures
     }):null;
     const keywordCounts={
@@ -234,7 +252,12 @@
       keywordGenericOnly:keywordStats?.candidatesOnlyGenericOrCommon||0,
       keywordMultiLabel:keywordStats?.candidatesWithTwoOrMoreSpecificLabels||0,
       keywordNegativeOverlap:keywordStats?.candidatesWithSpecificNegativeOverlap||0,
+      keywordNegativeSpecific:keywordStats?.candidatesWithAnyNegativeSpecificOverlap||0,
+      keywordNegativeOnly:keywordStats?.candidatesWithNegativeOnly||0,
+      keywordPositiveOnly:keywordStats?.candidatesWithPositiveOnly||0,
+      keywordMixedPositiveNegative:keywordStats?.candidatesWithMixedPositiveNegative||0,
       keywordNegativeAnchors:keywordStats?.negativeAnchors||0,
+      keywordShadowNegativesUnresolved,
       keywordCatalogLabels:keywordStats?.catalogKeywordsSeen||0,
       keywordPoolCommonCutoff:keywordStats?.poolCommonCutoff||0
     };
@@ -277,6 +300,7 @@
    'Source-specific yields are based on this bounded sample, not global TMDB search relevance.',
    'Cinematic Fingerprint tags are experimental, based on literal synopsis phrasing, and are excluded from recommendation scoring.',
    'Keyword specificity is a within-sample heuristic. Multiple community tags are not independent proof of film similarity and do not affect scoring.',
+   'Fictional shadow dislikes never change retrieval, ranking or eligibility; unresolved shadow controls reduce confidence in negative comparisons.',
     'No private Log, real member ID, or user interest responses were accessed.']};
  }
  return Object.freeze({run,summarize,chooseAnchors});
