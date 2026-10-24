@@ -316,9 +316,14 @@ function feedbackAdjustedPool(allowedKeys=null){
   decidedKeys:attraction.keys(),allowedKeys
  });
  const adjusted=eligible.map(item=>{
+   // Reactions are softer than watched-film ratings. Use independent
+   // evidence and cap the total effect so one click cannot hijack the Log.
    const positive=likes.reduce((sum,x)=>sum+Math.min(2.5,attractionSimilarity(item.facets,x.facets))*.65,0);
    const negative=passes.reduce((sum,x)=>sum+Math.min(2.5,attractionSimilarity(item.facets,x.facets))*.28,0);
-   return {...item,score:item.score+Math.min(3,positive)-Math.min(1.5,negative)};
+   const interestedBoost=Math.min(3,positive);
+   const passedPenalty=Math.min(2.5,negative);
+   return {...item,score:item.score+interestedBoost-passedPenalty,
+    feedbackInterestedBoost:interestedBoost,feedbackPassedPenalty:passedPenalty};
  }).sort((a,b)=>b.score-a.score);
  return engine.balanceShelves({entries:adjusted,profileEntries,impressions:ratingSignals,category:"movies",size:Math.min(10,adjusted.length)});
 }
