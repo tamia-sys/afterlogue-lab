@@ -4,7 +4,8 @@
    human preference accuracy or call TMDB, Supabase, or private Logs. */
 'use strict';
 const assert=require('node:assert/strict');
-const engine=require('../recommendation-engine.js');
+require('../recommendation-engine.js');
+const engine=globalThis.AfterlogueRecommendationEngine;
 const taste=require('../taste-model-v2.js');
 const policy=require('../eligibility-policy.js');
 
