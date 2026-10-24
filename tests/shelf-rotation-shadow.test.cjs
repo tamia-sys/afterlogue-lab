@@ -41,7 +41,10 @@ test('three sessions keep first 5 identical, never reuse an already chosen film,
   const eligible=policy.eligible(cinematic.rank(ranked,fixture.catalog,profile.impressions),
     {ratedKeys:Object.keys(profile.impressions)});
   const scores=new Map(eligible.map(x=>[x.key,x.score]));
-  assert.ok(result.shadow.every(x=>scores.get(x.key)===x.score));
+  // The production scorer computes a minuscule Date.now()-dependent recency
+  // adjustment for timestamped fictional histories, so compare numerically.
+  assert.ok(result.shadow.every(x=>Number.isFinite(scores.get(x.key))&&
+    Math.abs(scores.get(x.key)-x.score)<1e-6));
   assert.equal(result.aggregate.scoreFloorPreserved,true);
   const bc=collisionCount(result.baseline),sc=collisionCount(result.shadow);
   assert.ok(sc.every((n,i)=>n<=bc[i]));
