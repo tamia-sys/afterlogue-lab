@@ -5,9 +5,12 @@ on:
     paths:
       - .github/workflows/real-catalog-smoke.yml
       - tests/real-catalog-smoke.cjs
+      - tests/real-catalog-publish.cjs
+      - catalog-batch-audit.js
+      - cinematic-fingerprint.js
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: afterlogue-real-catalog-smoke
   cancel-in-progress: false
@@ -27,6 +30,22 @@ jobs:
       - name: Add aggregate findings to run summary
         if: always()
         run: node tests/real-catalog-report.cjs reports/real-catalog-smoke.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Write source-controlled aggregate-only validation digest
+        if: always()
+        run: node tests/real-catalog-publish.cjs reports/real-catalog-smoke.json docs/real-catalog-latest.json
+      - name: Publish sanitized digest in Lab repository
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/real-catalog-latest.json
+          if git diff --cached --quiet; then
+            echo "Aggregate digest unchanged"
+          else
+            git commit -m "Record public catalog aggregate audit [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
       - name: Upload aggregate-only diagnostic report
         if: always()
         uses: actions/upload-artifact@v4
