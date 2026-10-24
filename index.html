@@ -57,7 +57,7 @@ button:hover:not(:disabled){border-color:var(--gold)}
 <script src="evidence-balance.js?v=anchors-1"></script>
 <script src="taste-model-v2.js?v=topics-1"></script>
 <script src="cinematic-fingerprint.js?v=fingerprint-1"></script>
-<script src="catalog-batch-audit.js?v=real-catalog-3"></script>
+<script src="catalog-batch-audit.js?v=real-catalog-4"></script>
 <script src="interest-calibration.js?v=calibration-1"></script>
 <script>
 (()=>{
@@ -653,7 +653,9 @@ function renderBatchAudit(report){
     " · unanchored "+row.unanchoredRejections+" · other "+row.otherRejections,
    row.metadataReturned+"/"+row.metadataRequested,row.firstShelfComplete?"Yes":"No",
    row.multiSignalEligible+"/"+row.qualified+" multi-signal",
-   row.fingerprintExtraPlotTitles+" new-topic titles · "+row.fingerprintNewPlotLinks+" possible links",
+   row.fingerprintExtraPlotTitles+" new-topic titles · "+row.fingerprintNewPlotLinks+" possible links"+
+    " · "+row.fingerprintRawKeywordLinkedTitles+" community-tag links (shadow)"+
+    " · "+row.fingerprintRawKeywordUnqualifiedTitles+" not qualified",
    "title "+row.qualifiedLinkedOnly+"/"+row.evaluatedLinkedOnly+
     " · browse "+row.qualifiedBrowseOnly+"/"+row.evaluatedBrowseOnly+
     " · both "+row.qualifiedBoth+"/"+row.evaluatedBoth,
