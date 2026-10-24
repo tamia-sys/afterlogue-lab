@@ -35,7 +35,8 @@
    impressions,favorites,category,size});
   const total=Math.min(ordered.length,rounds*size);
   const positiveLanes=new Set([...ratings].filter(([,r])=>positive.has(r))
-   .map(([key])=>engine.storyLane(sources.get(key))).filter(Boolean));
+   .map(([key])=>sources.get(key)).filter(x=>x?.category===category)
+   .map(x=>engine.storyLane(x)).filter(Boolean));
   const supportedLanes=new Set(ordered.map(x=>engine.storyLane(x))
    .filter(x=>x&&positiveLanes.has(x)));
   const rotate=supportedLanes.size>=3;
@@ -79,7 +80,7 @@
       pick=candidates[0];
       promotions.push({round,position:within,
        scoreFloor:Math.max(0,Number(base.score))*minScoreRatio,
-       eligibleAt:remaining.indexOf(pick)});
+       chosenScore:Number(pick.score),eligibleAt:remaining.indexOf(pick)});
      }
     }
    }
@@ -120,7 +121,8 @@
     shadowCoverage:calculate(selected),
     promotions:promotions.length,
     noRepeatKeys:selected.length===new Set(selected.map(x=>x.key)).size,
-    scoreFloorPreserved:promotions.every(p=>Number.isFinite(p.scoreFloor)),
+    scoreFloorPreserved:promotions.every(p=>
+     Number.isFinite(p.scoreFloor)&&p.chosenScore+1e-9>=p.scoreFloor),
     shelves,
     caveat:"Research-only rearrangement within an existing qualified catalog. No new scores or verified audience response; 'genre lanes' are broad proxy groupings, not objective cinematic identity."
    }
