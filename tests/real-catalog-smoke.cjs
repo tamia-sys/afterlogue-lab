@@ -18,6 +18,8 @@ const anchorBalance=require('../evidence-balance.js');
 const fingerprint=require('../cinematic-fingerprint.js');
 const keywordAudit=require('../keyword-signal-audit.js');
 const corroboration=require('../evidence-corroboration.js');
+const editorialEvidence=require('../editorial-evidence.js');
+const editorialEvaluation=require('../editorial-evaluation.js');
 const narrative=require('../narrative-signals.js');
 
 // Exact existing LAB-only public endpoint. No keys, cookies or credentials.
@@ -111,6 +113,7 @@ function options(args){
 async function execute(config={},settings={}){
  const adapter=makeAdapter(settings);
  const report=await run({...adapter,engine,cinematic,policy,anchorBalance,fingerprint,keywordAudit,corroboration,
+  editorialEvidence,editorialEvaluation,editorialObservations:[],
   profiles:PROFILES.slice(0,config.profileLimit||2),
   maxPlans:config.plans||2,maxCandidates:config.candidates||30});
  const result={
@@ -153,6 +156,12 @@ async function execute(config={},settings={}){
     keywordWithMixedNegativeEvidence:p.corroborationWithMixedNegativeEvidence,
     corroboratedWithMixedNegativeEvidence:p.corroborationWithMixedNegativeEvidenceAndIndependentFacet,
     differentLogAnchorSupportOnly:p.corroborationCrossAnchorOnly,
+    editorialReviewedPositive:p.editorialReviewedPositive,
+    editorialReviewedCandidates:p.editorialReviewedCandidates,
+    editorialMultiDimensionCandidates:p.editorialMultiDimensionCandidates,
+    editorialUnknownCandidates:p.editorialUnknownCandidates,
+    editorialQualifiedMatches:p.editorialQualifiedMultiDimensionCandidates,
+    editorialConflictedCandidates:p.editorialConflictedCandidates,
     separateStoryDeviceTitles:p.fingerprintExplicitDeviceTitles,
     withSynopsis:p.fingerprintWithSynopsis,withCreatorCredit:p.fingerprintWithCreatorCredit,
     withMappedKeywords:p.fingerprintWithMappedKeywords,
