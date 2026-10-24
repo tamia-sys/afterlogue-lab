@@ -45,6 +45,18 @@ Independent reviewers should use **different pseudonymous codes**. For trustwort
 
 The simple agreement ratio is **label coincidence on mutually observed dimension pairs**, not evidence that labels are correct, statistically reliable, or useful to predict film interest. There is no majority-vote auto-arbitration and no automated promotion of notes into the cinematic scorer.
 
+## New: cautious chance-adjusted agreement
+
+A raw agreement percentage can look convincing when everyone repeatedly selects the same label (for example, describing every film as *moderate*). The pilot now computes **exploratory, chance-corrected Cohen's kappa per dimension**, but ONLY when exactly two independent reviewer codes submit observations for **at least six of the same films** in that dimension, and each reviewer used more than one category.
+
+- With too few overlapping films, it displays **not estimated: insufficient overlap**.
+- If one reviewer never varies a label, it displays **not estimated: no category variation** even if raw agreement appears to be 100%.
+- With three or more reviewers it shows descriptive agreement only. A specialized multi-rater statistic would be a separate study; pairwise comparisons from 3+ reviewers are not independent.
+- Even when reported, kappa is **exploratory**, not a validated reliability threshold, prediction of enjoyment, or evidence that either review is correct. Six observations do not yield a precise statistical estimate.
+- Agreement and chance-adjustment stats are calculated in browser memory and may be exported only as aggregate counts and numeric indicators; film names and free-text original notes do not enter the aggregate.
+
+The practical goal is to discover where the review vocabulary is ambiguous **before** using reviewer-supplied attributes as signals for film discovery. No score adjustments, eligibility changes, database writes, provider calls, or automated content ingestion are authorized by this experiment.
+
 ## Data handling
 
 - There are **no** network requests, authentication or persistent browser storage made by [editorial-pilot.html](../editorial-pilot.html).
