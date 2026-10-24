@@ -127,3 +127,20 @@ test('published holdout report contains no source film, reviewer, notes or per-f
  for(const phrase of [...keys.slice(0,3),'first-reviewer','second-reviewer',
   'invented observation'])assert.equal(s.includes(phrase),false);
 });
+
+test('two agreeing facets with another reviewer conflict are quarantined from interest hypotheses',()=>{
+ const all=reviewed(
+  [[keys[0],styleA],[keys[1],styleB],[keys[2],styleA]],
+  [[keys[0],styleA],[keys[1],styleB],
+   [keys[2],{...styleA,dialogueDensity:'dialogue-driven'}]]
+ );
+ const disputed=all.films.find(x=>x.key===keys[2]);
+ assert.equal(disputed.agreedDimensionCount,3);
+ assert.equal(disputed.usable,false);
+ assert.equal(disputed.conflicted.includes('dialogueDensity'),true);
+ const result=holdout.evaluate({consensus:all,
+  anchors:[{key:keys[0],impression:'Loved'},{key:keys[1],impression:'Not for me'}],
+  targets:[{key:keys[2],interest:'Interested'}]});
+ assert.equal(result.hypothesesMade,0);
+ assert.equal(result.abstentionsByReason['insufficient-target-observations'],1);
+});
