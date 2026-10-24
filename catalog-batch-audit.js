@@ -90,6 +90,12 @@
    corroborationWithNegativeCollisionAndIndependentFacet:sum('corroborationWithNegativeCollisionAndIndependentFacet'),
    corroborationWithMixedNegativeEvidence:sum('corroborationWithMixedNegativeEvidence'),
    corroborationWithMixedNegativeEvidenceAndIndependentFacet:sum('corroborationWithMixedNegativeEvidenceAndIndependentFacet'),
+   editorialReviewedPositive:sum('editorialReviewedPositive'),
+   editorialReviewedCandidates:sum('editorialReviewedCandidates'),
+   editorialMultiDimensionCandidates:sum('editorialMultiDimensionCandidates'),
+   editorialQualifiedMultiDimensionCandidates:sum('editorialQualifiedMultiDimensionCandidates'),
+   editorialUnknownCandidates:sum('editorialUnknownCandidates'),
+   editorialConflictedCandidates:sum('editorialConflictedCandidates'),
    keywordDifferentLabelConflictRate:ratio(sum('keywordDifferentLabelConflict'),sum('evaluatedCandidates')),
    multiSignalEligibleShare:ratio(sum('multiSignalEligible'),sum('qualified')),
    meanDistinctGenresFirstFive:mean('topGenres'),
@@ -99,7 +105,9 @@
    independentBrowseFailures:sum('browseFailures'),metadataFailures:sum('metadataFailures')};
  }
  async function run({profiles,api,resolveTitle,toEntry,features,enrich,engine,cinematic,policy,
-   anchorBalance,fingerprint=null,keywordAudit=null,corroboration=null,onProgress=()=>{},shouldCancel=()=>false,maxPlans=4,maxCandidates=60}={}){
+   anchorBalance,fingerprint=null,keywordAudit=null,corroboration=null,
+   editorialEvidence=null,editorialEvaluation=null,editorialObservations=[],
+   onProgress=()=>{},shouldCancel=()=>false,maxPlans=4,maxCandidates=60}={}){
   if(!Array.isArray(profiles)||!profiles.length||profiles.length>20)throw Error('Choose 1–20 fictional viewer histories');
   if(![api,resolveTitle,toEntry,features,enrich].every(x=>typeof x==='function')||
      !engine?.rank||!cinematic?.rank||!policy?.eligible||!anchorBalance?.balance)
@@ -308,6 +316,23 @@
       corroborationWithMixedNegativeEvidence:corroborationStats?.keywordWithMixedNegativeEvidence||0,
       corroborationWithMixedNegativeEvidenceAndIndependentFacet:corroborationStats?.corroboratedWithMixedNegativeEvidence||0
     };
+    // Opt-in original or rights-cleared human review, never inferred from TMDB.
+    // No annotations in the ordinary real-catalog run means UNKNOWN coverage.
+    const observationSummary=editorialEvaluation?.inspect&&editorialEvidence?.parse
+      ?editorialEvaluation.inspect({
+        observations:Array.isArray(editorialObservations)?editorialObservations.slice(0,80):[],
+        positiveKeys:complete.filter(x=>["Loved","Liked"].includes(ratings[x.key])).map(x=>x.key),
+        candidateKeys:candidateFeatures.map(x=>x.key),
+        qualifiedKeys:[...eligibleKeys],editorialEvidence
+       }):null;
+    const editorialCounts={
+      editorialReviewedPositive:observationSummary?.reviewedPositiveAnchors||0,
+      editorialReviewedCandidates:observationSummary?.reviewedCandidates||0,
+      editorialMultiDimensionCandidates:observationSummary?.candidatesWithMultiDimensionEditorialMatch||0,
+      editorialQualifiedMultiDimensionCandidates:observationSummary?.qualifiedCandidatesWithMultiDimensionEditorialMatch||0,
+      editorialUnknownCandidates:observationSummary?.fullyUnknownCandidates||candidates.length,
+      editorialConflictedCandidates:observationSummary?.candidatesWithAmbiguousEditorialEvidence||0
+    };
     const row={profile:profile.name,historyTitles:found.length,positiveAnchors:selected.length,
      titleRequests:plans.length,recommendationFailures,browseFailures,metadataFailures,
      invalidProviderItems:invalid,providerDuplicates:duplicated,uniqueRetrieved:all.length,
@@ -320,7 +345,7 @@
      qualified:eligible.length,multiSignalEligible:bestEvidenceMultiple,
      synopsisOnlyEligible:eligible.filter(x=>x.cinematicSynopsisOnly).length,
      legacyPositive:legacyRanked.filter(x=>x.score>0).length,
-     bestEvidenceNone,bestEvidenceSingle,bestEvidenceMultiple,...funnel,...routes,...fpSummary,...keywordCounts,...corroborationCounts,
+     bestEvidenceNone,bestEvidenceSingle,bestEvidenceMultiple,...funnel,...routes,...fpSummary,...keywordCounts,...corroborationCounts,...editorialCounts,
      firstShelfComplete:Number(top.length===5),secondShelfComplete:Number(next.length===5),
      topGenres:unique(top.flatMap(x=>facetsOf(x).genres||[])).length,
      topAnchors:unique(top.map(x=>x.cinematicAnchor).filter(Boolean)).length,
@@ -349,6 +374,7 @@
    'Keyword specificity is a within-sample heuristic. Multiple community tags are not independent proof of film similarity and do not affect scoring.',
    'Fictional shadow dislikes never change retrieval, ranking or eligibility; unresolved shadow controls reduce confidence in negative comparisons.',
    'Corroboration counts cross-metadata evidence for the SAME positive Log film. TMDB synopsis clues are not verified film style or empirical human preference.',
+   'Original editorial observations are absent by default and unknown; only explicitly reviewed rights-cleared annotations can support subjective cinematic attributes.',
     'No private Log, real member ID, or user interest responses were accessed.']};
  }
  return Object.freeze({run,summarize,chooseAnchors});
