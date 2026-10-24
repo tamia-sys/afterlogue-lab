@@ -604,28 +604,36 @@ function renderBatchAudit(report){
   Math.round(summary.firstShelfCompletionRate*100)+"% had 5 qualified films · "+
   Math.round(summary.secondShelfCompletionRate*100)+"% had 10 · "+
   summary.meanQualifiedCandidates.toFixed(1)+" mean qualified candidates · "+
+  Math.round(summary.candidateQualificationRate*100)+"% qualification rate · "+
+  summary.meanMissingEvidenceRejections.toFixed(1)+" rejected for missing cinematic evidence, on average · "+
   Math.round(summary.candidateThemeCoverage*100)+"% candidate theme coverage · "+
   Math.round(summary.candidateToneCoverage*100)+"% tone coverage · "+
   summary.ratedTitleViolations+" rated-title violations · "+summary.duplicateViolations+" duplicates";
  target.append(p);
  const table=document.createElement("table");
  table.style.cssText="width:100%;border-collapse:collapse;font-size:12px;margin:14px 0";
- const headers=["Fictional viewer","Retrieved","Evaluated","Qualified","Metadata","Five picks","Independent evidence"];
+ const headers=["Fictional viewer","Retrieved","Evaluated","Qualified","Rejection funnel","Metadata","Five picks","Independent evidence","Retrieval yields","Possible bottleneck"];
  const head=document.createElement("tr");
  for(const label of headers){const cell=document.createElement("th");cell.textContent=label;cell.style.cssText="text-align:left;padding:8px;border-bottom:1px solid #49453f";head.append(cell)}
  table.append(head);
  for(const row of report.profiles){
-  const data=row.error?[row.profile,"—","—","—","Error","No",row.error]:
+  const data=row.error?[row.profile,"—","—","—","—","Error","No","—","—",row.error]:
    [row.profile,row.uniqueRetrieved,row.evaluatedCandidates,row.qualified,
+   "low score "+row.lowScoreRejections+" · no evidence "+row.missingEvidenceRejections+
+    " · unanchored "+row.unanchoredRejections+" · other "+row.otherRejections,
    row.metadataReturned+"/"+row.metadataRequested,row.firstShelfComplete?"Yes":"No",
-   row.multiSignalEligible+"/"+row.qualified+" qualified"];
+   row.multiSignalEligible+"/"+row.qualified+" multi-signal",
+   "title "+row.qualifiedLinkedOnly+"/"+row.evaluatedLinkedOnly+
+    " · browse "+row.qualifiedBrowseOnly+"/"+row.evaluatedBrowseOnly+
+    " · both "+row.qualifiedBoth+"/"+row.evaluatedBoth,
+   row.diagnosticHint+(row.candidateAccounting==="reconciled"?"":" · COUNTS MISMATCH")];
   const line=document.createElement("tr");
   for(const value of data){const cell=document.createElement("td");cell.textContent=String(value);cell.style.cssText="padding:8px;border-bottom:1px solid #49453f;vertical-align:top";line.append(cell)}
   table.append(line);
  }
  const wrapper=document.createElement("div");wrapper.style.overflowX="auto";wrapper.append(table);target.append(wrapper);
  const caveat=document.createElement("p");caveat.className="muted";
- caveat.style.fontSize="12px";caveat.textContent="This is public film-catalog structural evidence, not a prediction accuracy score. The report does not include member Logs or film-by-film private responses.";
+ caveat.style.fontSize="12px";caveat.textContent="Rejection reasons are mutually exclusive diagnostic buckets, not the reasons a human would reject a film. Route yields are for this bounded sample only. No empirical preference accuracy is inferred, and no member Logs were accessed.";
  target.append(caveat);
 }
 $("run-batch").addEventListener("click",async()=>{
