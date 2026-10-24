@@ -44,6 +44,7 @@ button:hover:not(:disabled){border-color:var(--gold)}
 <script src="recommendation-engine.js?v=pipeline-fix-v2"></script>
 <script src="eligibility-policy.js?v=policy-1"></script>
 <script src="narrative-signals.js?v=topics-1"></script>
+<script src="evidence-balance.js?v=anchors-1"></script>
 <script src="taste-model-v2.js?v=topics-1"></script>
 <script>
 (()=>{
@@ -289,7 +290,7 @@ function feedbackAdjustedPool(allowedKeys=null){
    return {...item,score:item.score+interestedBoost-passedPenalty,
     feedbackInterestedBoost:interestedBoost,feedbackPassedPenalty:passedPenalty};
  }).sort((a,b)=>b.score-a.score);
- return engine.balanceShelves({entries:adjusted,profileEntries,impressions:ratingSignals,category:"movies",size:Math.min(10,adjusted.length)});
+ return window.AfterlogueAnchorBalance.balance(engine.balanceShelves({entries:adjusted,profileEntries,impressions:ratingSignals,category:"movies",size:5}),5);
 }
 // Retrieval and selection are deliberately separate. Only newly retrieved titles
 // may appear on a subsequent shelf; older unused candidates cannot masquerade as new.
