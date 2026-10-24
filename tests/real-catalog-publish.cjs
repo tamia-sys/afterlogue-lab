@@ -48,6 +48,10 @@ const fields=[
  'negativeOnlyKeywordLinkedTitles','positiveOnlyKeywordLinkedTitles',
  'mixedKeywordEvidenceTitles','differentLabelConflictTitles',
  'qualifiedMixedEvidence','qualifiedExactConflict','qualifiedNegativeOnly',
+ 'specificKeywordWithIndependentFacet','specificKeywordWithoutIndependentFacet',
+ 'independentlyVerifiedCreatorLinks','independentlySupportedSynopsisClues',
+ 'corroboratedQualifiedLinks','uncorroboratedQualifiedKeywordLinks',
+ 'corroboratedButDislikeCollision','differentLogAnchorSupportOnly',
  'withSynopsis','withCreatorCredit','withMappedKeywords','withOriginalKeywords',
  'withPlotClues','qualifiedTitleLinkedOnly','evaluatedTitleLinkedOnly',
  'qualifiedBrowseOnly','evaluatedBrowseOnly','bestEvidenceSingle','bestEvidenceMultiple'
