@@ -57,3 +57,23 @@ Never force out-of-taste titles into the main five to make a diversity metric lo
 3. Run a blinded small volunteer watch-interest study before deploying a recommendation model change.
 
 Do not deploy new scores or candidate retrieval rules to production based on these tests alone.
+
+
+## Recorded synthetic benchmark checkpoint — 2026-10-23
+
+Command settings: 240 synthetic viewers, 8 storytelling lanes x 24 films (192 fictional items), 25% missing cinematic metadata, seed 23, nominal 120-candidate result budget, K=5. Actual legacy ranker, v2.1 cinematic reranker, eligibility, and both existing lab balancing stages were used.
+
+| Structural metric | Diversified anchors | Two-seed |
+|---|---:|---:|
+| Full first shelf (five) | 100% | 100% |
+| Full second shelf (five more) | 90.8% | 94.2% |
+| Positive synthetic taste lanes retrieved | 99.5% | 74.7% |
+| Genres represented in first shelf, mean | 2.83 | 2.55 |
+| Distinct contributing Log anchors in first shelf, mean | 3.45 | 3.01 |
+| Eligible candidates per viewer, mean | 31.59 | 29.37 |
+| Previously rated titles shown | 0 | 0 |
+| Duplicate titles shown | 0 | 0 |
+
+These are **not results from real viewers, real TMDB calls, or MovieLens ratings**. The synthetic two-seed and eight-anchor strategies consume different numbers of retrieval queries and return different actual numbers of candidates despite the same nominal result budget. The tradeoff is important: the diversified strategy provides broader synthetic taste coverage, while the deeper two-seed search completes slightly more second shelves.
+
+**Engineering priority:** broaden candidate sourcing without sacrificing second-shelf coverage, request cost, or actual viewer relevance. These measures are exploratory diagnostics, not production release thresholds.
