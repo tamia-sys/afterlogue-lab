@@ -1,6 +1,6 @@
 {
   "format": "afterlogue-aggregate-public-catalog-v1",
-  "checkedAt": "2026-10-24T08:02:20.268Z",
+  "checkedAt": "2026-10-24T08:05:22.223Z",
   "status": "partially_or_fully_completed",
   "fictionalOnly": true,
   "shadowFingerprintOnly": true,
@@ -10,7 +10,7 @@
     "profilesAttempted": 2,
     "profilesCompleted": 2,
     "profilesFailed": 0,
-    "meanUniqueRetrieved": 143,
+    "meanUniqueRetrieved": 143.5,
     "meanEvaluatedCandidates": 24,
     "meanQualifiedCandidates": 2,
     "firstShelfCompletionRate": 0,
@@ -49,7 +49,7 @@
     {
       "profile": "Fictional Cinephile",
       "status": "completed",
-      "found": 88,
+      "found": 89,
       "evaluated": 24,
       "metadataReturned": 29,
       "metadataRequested": 29,
