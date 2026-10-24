@@ -250,7 +250,10 @@ function feedbackAdjustedPool(allowedKeys=null){
  // signal; only the specific rejected recommendation is removed outright.
  const likes=[...attraction].filter(([,v])=>v==="interested").map(([k])=>profileEntries.find(x=>x.key===k)).filter(Boolean);
  const passes=[...attraction].filter(([,v])=>v==="pass").map(([k])=>profileEntries.find(x=>x.key===k)).filter(Boolean);
- const eligible=allRanked.filter(x=>(!allowedKeys||allowedKeys.has(x.key))&&!seen.has(x.key)&&!attraction.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length);
+ // Broad genre overlap is a candidate-generation signal, not proof of taste.
+ // Require a positive Log anchor plus an independently verified cinematic
+ // link for a *qualified* personalized recommendation.
+ const eligible=allRanked.filter(x=>(!allowedKeys||allowedKeys.has(x.key))&&!seen.has(x.key)&&!attraction.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
  const adjusted=eligible.map(item=>{
    const positive=likes.reduce((sum,x)=>sum+Math.min(2.5,attractionSimilarity(item.facets,x.facets))*.65,0);
    const negative=passes.reduce((sum,x)=>sum+Math.min(2.5,attractionSimilarity(item.facets,x.facets))*.28,0);
@@ -322,16 +325,17 @@ async function retrieveNextBatch(){
   const freshKeys=new Set(enriched.map(x=>x.key));
   // Rank against the entire Log, then restrict the selection to genuinely fresh
   // candidates. Preserve the existing feedback and balanced five-film shelf.
-  const preBalance=ranked.filter(x=>freshKeys.has(x.key)&&!seen.has(x.key)&&!attraction.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length);
+  const preBalance=ranked.filter(x=>freshKeys.has(x.key)&&!seen.has(x.key)&&!attraction.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
   const qualified=feedbackAdjustedPool(freshKeys);
   const strongCount=qualified.filter(x=>x.cinematicSignalCount>=2).length;
   const partialCount=qualified.filter(x=>x.cinematicSignalCount===1).length;
-  const eligible=ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length);
+  const eligible=ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
   const rejected={
     fresh:enriched.length,
     lowScore:ranked.filter(x=>freshKeys.has(x.key)&&!(x.score>0)).length,
     notPersonalized:ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&!x.personalized).length,
     unmatched:ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&x.personalized&&!x.matched?.length).length,
+    noCinematicEvidence:ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount===0).length,
     beforeBalance:preBalance.length,afterBalance:qualified.length,
     balanceRemoved:Math.max(0,preBalance.length-qualified.length),
     multiSignal:strongCount,singleSignal:partialCount,metadata:meta.size
