@@ -15,3 +15,7 @@ jobs:
         run: node --test tests/benchmark-movielens.test.cjs
       - name: Run existing recommendation regression tests
         run: node --test tests/*.test.cjs
+      - name: Stress 120 fictional viewers with balanced retrieval
+        run: node tests/stress-personas.cjs --personas 120 --per-lane 16 --strategy balanced
+      - name: Compare legacy two-seed retrieval in the same synthetic catalog
+        run: node tests/stress-personas.cjs --personas 120 --per-lane 16 --strategy two-seed
