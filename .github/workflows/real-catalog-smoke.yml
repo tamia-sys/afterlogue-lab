@@ -24,6 +24,9 @@ jobs:
         run: node --test tests/real-catalog-smoke.test.cjs
       - name: Verify public film-catalog metadata on two fictional viewers
         run: node tests/real-catalog-smoke.cjs --profiles 2 --candidates 24 --plans 1 --output reports/real-catalog-smoke.json
+      - name: Add aggregate findings to run summary
+        if: always()
+        run: node tests/real-catalog-report.cjs reports/real-catalog-smoke.json >> "$GITHUB_STEP_SUMMARY"
       - name: Upload aggregate-only diagnostic report
         if: always()
         uses: actions/upload-artifact@v4
