@@ -43,7 +43,8 @@ button:hover:not(:disabled){border-color:var(--gold)}
 </main>
 <script src="recommendation-engine.js?v=pipeline-fix-v2"></script>
 <script src="eligibility-policy.js?v=policy-1"></script>
-<script src="taste-model-v2.js?v=module-1"></script>
+<script src="narrative-signals.js?v=topics-1"></script>
+<script src="taste-model-v2.js?v=topics-1"></script>
 <script>
 (()=>{
 "use strict";
@@ -69,7 +70,7 @@ if(!eligibility)throw Error("Recommendation eligibility policy failed to load.")
   const p=profiles[Number($("persona").value)]||profiles[0];
   const row={session_id:testId,event_type,persona:p.name,phase:Number($("phase").value)||0,
    batch_number:page,movie_key:movie?.key||null,movie_title:movie?.title||null,choice,
-   payload:{...payload,build:"taste-v2-evidence-audit-1",run:runToken}};
+   payload:{...payload,build:"taste-v2-synopsis-prototype-1",run:runToken}};
   const task=async()=>{
    try{
     const res=await fetch(telemetryEndpoint,{method:"POST",headers:{"apikey":telemetryKey,
@@ -105,7 +106,8 @@ function toEntry(item,position){
   directMatches:(item.matched||[]).map(slug),
   tmdb:{id,media},synopsis:item.synopsis||"",
   facets:{genres:(item.genres||[]).map(x=>String(x).toLowerCase()),
-   themes:[],tones:[],pace:null,directors:[],writers:[]}};
+   themes:[],tones:[],pace:null,directors:[],writers:[],
+   narrativeThemes:window.AfterlogueNarrativeSignals.extract(item.synopsis||"")}};
 }
 async function resolveTitle(title){
  if(cache.has("title:"+title))return cache.get("title:"+title);
@@ -129,7 +131,8 @@ function enrich(entries,featureMap){
   const f=featureMap.get(entry.key);if(!f)return entry;
   return {...entry,collectionId:f.collectionId||entry.collectionId,
    facets:{genres:f.genres||entry.facets.genres,themes:f.themes||[],tones:f.tones||[],
-    pace:null,directors:f.directors||[],writers:f.writers||[]}};
+    pace:null,directors:f.directors||[],writers:f.writers||[],
+    narrativeThemes:entry.facets.narrativeThemes||[]}};
  });
 }
 function diversifiedSeedPlans(anchors,rotation=0){
@@ -217,9 +220,10 @@ async function generate(){
  const sources=enrich(source,metadata),choices=enrich(candidates,metadata);
  const coverage=xs=>({titles:xs.length,genres:xs.filter(x=>x.facets.genres.length).length,
  themes:xs.filter(x=>x.facets.themes.length).length,tones:xs.filter(x=>x.facets.tones.length).length,
- directors:xs.filter(x=>x.facets.directors.length).length,writers:xs.filter(x=>x.facets.writers.length).length});
+ directors:xs.filter(x=>x.facets.directors.length).length,writers:xs.filter(x=>x.facets.writers.length).length,
+ narrative:xs.filter(x=>x.facets.narrativeThemes?.length).length});
  const sourceCoverage=coverage(sources),candidateCoverage=coverage(choices);
- const stat=(name,x)=>name+": "+x.genres+"/"+x.titles+" genre · "+x.themes+"/"+x.titles+" theme · "+x.tones+"/"+x.titles+" tone · "+x.directors+"/"+x.titles+" director · "+x.writers+"/"+x.titles+" writer";
+ const stat=(name,x)=>name+": "+x.genres+"/"+x.titles+" genre · "+x.themes+"/"+x.titles+" theme · "+x.tones+"/"+x.titles+" tone · "+x.directors+"/"+x.titles+" director · "+x.writers+"/"+x.titles+" writer · "+x.narrative+"/"+x.titles+" synopsis topics";
  $("audit").textContent=diagnostic+" | Fictional Log — "+stat("coverage",sourceCoverage)+" | Candidate pool — "+stat("coverage",candidateCoverage);
  profileEntries=[...sources,...choices];ratingSignals=ratings;
  const ranked=engine.rank({entries:profileEntries,category:"movies",impressions:ratings});
@@ -239,11 +243,12 @@ async function generate(){
   multipleKinds:initialQualified.filter(x=>x.cinematicEvidenceKindCount>=2).length,
   filmmakerOnly:initialQualified.filter(x=>x.cinematicEvidenceTypes?.length&&x.cinematicEvidenceTypes.every(t=>t==="director"||t==="writer")).length,
   positiveAnchors2plus:initialQualified.filter(x=>x.cinematicAnchorCount>=2).length,
+  synopsisOnly:initialQualified.filter(x=>x.cinematicSynopsisOnly).length,
   withoutThemes:initialQualified.filter(x=>!x.facets.themes?.length).length,
   withoutTones:initialQualified.filter(x=>!x.facets.tones?.length).length
  };
  track("pipeline_audit",{payload:{retrieval_round:0,candidatePool:candidateMap.size,evaluated:candidates.length,deferred:initialDeferred,metadata:metadata.size,ranked:allRanked.length,verifiedCinematic:initialQualified.length,balanced:pool.length,selected:Math.min(5,pool.length),source:"initial_mixed",evidenceAudit}});
- $("retrieval-audit").textContent+=" · "+initialQualified.length+" qualified cinematic matches · "+pool.length+" balanced · "+evidenceAudit.multipleKinds+" multi-signal · "+evidenceAudit.oneKind+" single-signal · "+evidenceAudit.filmmakerOnly+" filmmaker-only · "+evidenceAudit.positiveAnchors2plus+" multiple Log anchors";
+ $("retrieval-audit").textContent+=" · "+initialQualified.length+" qualified Log connections · "+pool.length+" balanced · "+evidenceAudit.multipleKinds+" multi-signal · "+evidenceAudit.oneKind+" single-signal · "+evidenceAudit.synopsisOnly+" synopsis-only clues · "+evidenceAudit.filmmakerOnly+" filmmaker-only · "+evidenceAudit.positiveAnchors2plus+" multiple Log anchors";
  const excluded=new Set(source.map(x=>x.key));pool=pool.filter(x=>!excluded.has(x.key));
  $("stats").textContent="Verified Log: "+found.length+"/"+logged.length+" · Candidates: "+candidates.length+" · Enriched: "+metadata.size+" · Qualified: "+pool.length;
  showNext();if(pool.length<5)setStatus("Only "+pool.length+" qualified titles found in this bounded sample; no filler invented.");
@@ -402,8 +407,8 @@ async function retrieveNextBatch(){
    "Excluded: "+rejected.lowScore+" low score, "+rejected.notPersonalized+" not personalized, "+rejected.unmatched+" unmatched, "+rejected.noCinematicEvidence+" no cinematic evidence, "+rejected.balanceRemoved+" by balancing · "+
    Math.min(5,qualified.length)+" selected";
   if(!qualified.length){
-   setStatus("Retrieval completed, but no unshown candidates passed verified cinematic-evidence checks. No genre-only filler or repeats shown.");
-   track("batch_error",{payload:{reason:"no_verified_cinematic_matches",retrieval_round:retrievalRound,checked:enriched.length,backlog:pending.length}});
+   setStatus("Retrieval completed, but no unshown candidates passed the Log-evidence checks. No genre-only filler or repeats shown.");
+   track("batch_error",{payload:{reason:"no_supported_log_matches",retrieval_round:retrievalRound,checked:enriched.length,backlog:pending.length}});
    return;
   }
   showNext(qualified);
@@ -448,7 +453,7 @@ function showNext(override=null){
   decidedKeys:attraction.keys(),size:5
  });
  $("results").replaceChildren();
- if(!next.length){track("batch_error",{payload:{reason:"empty_selection"}});const d=document.createElement("div");d.className="empty";d.textContent="No verified cinematic matches are available from this batch. The lab will not fill the shelf with weak genre-only guesses."; $("results").append(d);$("again").disabled=false;return}
+ if(!next.length){track("batch_error",{payload:{reason:"empty_selection"}});const d=document.createElement("div");d.className="empty";d.textContent="No supported Log connections were found in this batch. The lab will not fill the shelf with genre-only guesses."; $("results").append(d);$("again").disabled=false;return}
  page++;$("page-num").textContent=String(page).padStart(3,"0");
  track("batch_shown",{payload:{titles:next.map((item,i)=>({key:item.key,title:item.title,year:item.year,rank:i+1,score:Math.round(item.score*10)/10,signals:item.cinematicSignalCount||0,reason:String(item.cinematicExplanation||"").slice(0,230),evidence:item.cinematicEvidenceDetails||[],anchor:item.cinematicAnchor||null})),retrieval_round:retrievalRound}});
  for(const item of next){
@@ -458,7 +463,7 @@ function showNext(override=null){
   if(item.poster&&/^https:\/\//.test(item.poster))poster.src=item.poster;
   const title=document.createElement("strong");title.textContent=item.title;
   const year=document.createElement("small");year.textContent=item.year||"";
-  const why=document.createElement("p");why.className="why";why.textContent=item.cinematicExplanation||"No verified cinematic evidence available.";
+  const why=document.createElement("p");why.className="why";why.textContent=item.cinematicExplanation||"No supported Log connection found.";
   const links=document.createElement("div");links.className="film-links";
   const details=document.createElement("a");
   details.href="https://www.themoviedb.org/movie/"+encodeURIComponent(item.tmdb?.id||"");
