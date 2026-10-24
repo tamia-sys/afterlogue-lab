@@ -84,7 +84,7 @@
    ],
    sourceEvidence:{
     hasSynopsis:!!synopsis.trim(),
-    hasOriginalKeywordNames:rawKeywordNames.length>0, // Not yet exposed by current Lab catalog response.
+    hasOriginalKeywordNames:rawKeywordNames.length>0, // Optional label field from separate Lab catalog response.
     hasGenres:clean(f.genres).length>0,
     hasCredits:clean([...(f.directors||[]),...(f.writers||[])]).length>0,
     hasMappedKeywords:clean([...(f.themes||[]),...(f.tones||[])]).length>0,
