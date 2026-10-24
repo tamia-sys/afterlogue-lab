@@ -190,6 +190,7 @@ async function generate(){
   if(i<discoverSource.length&&mixed.length<120)mixed.push(discoverSource[i]);
  }
  const candidates=mixed.map((x,i)=>toEntry(x,400+i));
+ const initialDeferred=candidateMap.size-candidates.length;
  $("retrieval-audit").textContent="Initial retrieval: "+plans.length+" title-seed plans + "+(initialBrowse.audit?.plans||0)+" Discover pages · "+candidateMap.size+" unique candidates ("+candidates.length+" evaluated; "+addedBrowse+" additional Discover films)";
  if(!candidates.length)throw Error("No verified candidate films were returned. The catalog may be temporarily unavailable.");
  setStatus("Loading verified genres, themes, and filmmaker credits...");
