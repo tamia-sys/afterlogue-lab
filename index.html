@@ -96,7 +96,7 @@ if(!eligibility)throw Error("Recommendation eligibility policy failed to load.")
  $("save-state").textContent="Ready to save";
 
 const cache=new Map();let batchRunning=false,batchCancelled=false,batchReport=null;let pool=[],seen=new Set(),page=0,runToken=0;const attraction=new Map(),familiarity=new Map(),trailerPass=new Set(),newDiscovery=new Map(),watchIntent=new Map();let allRanked=[],profileEntries=[],ratingSignals={},retrievalRound=0,fetchingMore=false;
-let deferredCatalog=new Map();
+let deferredCatalog=new Map();let pendingPipelineAudit=null;
 profiles.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=p.name;$("persona").append(o)});
 function history(){const p=profiles[Number($("persona").value)],phase=Number($("phase").value);return [...p.base,...(phase>0?p.changes:[]),...(phase>1?p.later:[])];}
 function renderHistory(){
@@ -163,7 +163,7 @@ function diversifiedSeedPlans(anchors,rotation=0){
  return [...new Map(plans.map(p=>[p.join("|"),p])).values()].slice(0,18);
 }
 async function generate(){
- const token=++runToken;track("session_start",{payload:{action:"generate"}});pool=[];seen=new Set();page=0;attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();allRanked=[];retrievalRound=0;fetchingMore=false;deferredCatalog.clear();$("run").disabled=true;$("again").disabled=true;$("export-audit").disabled=true;
+ const token=++runToken;track("session_start",{payload:{action:"generate"}});pool=[];seen=new Set();page=0;attraction.clear();familiarity.clear();trailerPass.clear();newDiscovery.clear();watchIntent.clear();allRanked=[];retrievalRound=0;fetchingMore=false;pendingPipelineAudit=null;deferredCatalog.clear();$("run").disabled=true;$("again").disabled=true;$("export-audit").disabled=true;
  $("results").replaceChildren();$("stats").textContent="";$("audit").textContent="";$("audit-pool").replaceChildren();$("retrieval-audit").textContent="Initial retrieval in progress.";setStatus("Resolving fictional Log titles against the public film catalog...");
  try{
  const logged=history();const settled=await Promise.allSettled(logged.map(([title])=>resolveTitle(title)));
@@ -260,7 +260,7 @@ async function generate(){
   withoutThemes:initialQualified.filter(x=>!x.facets.themes?.length).length,
   withoutTones:initialQualified.filter(x=>!x.facets.tones?.length).length
  };
- track("pipeline_audit",{payload:{retrieval_round:0,candidatePool:candidateMap.size,evaluated:candidates.length,deferred:initialDeferred,metadata:metadata.size,ranked:allRanked.length,verifiedCinematic:initialQualified.length,balanced:pool.length,selected:Math.min(5,pool.length),source:"initial_mixed",evidenceAudit}});
+ pendingPipelineAudit={retrieval_round:0,candidatePool:candidateMap.size,evaluated:candidates.length,deferred:initialDeferred,metadata:metadata.size,ranked:allRanked.length,verifiedCinematic:initialQualified.length,balanced:pool.length,selected:Math.min(5,pool.length),source:"initial_mixed",evidenceAudit};
  $("retrieval-audit").textContent+=" · "+initialQualified.length+" qualified Log connections · "+pool.length+" balanced · "+evidenceAudit.multipleKinds+" multi-signal · "+evidenceAudit.oneKind+" single-signal · "+evidenceAudit.synopsisOnly+" synopsis-only clues · "+evidenceAudit.filmmakerOnly+" filmmaker-only · "+evidenceAudit.positiveAnchors2plus+" multiple Log anchors";
  const excluded=new Set(source.map(x=>x.key));pool=pool.filter(x=>!excluded.has(x.key));
  $("stats").textContent="Verified Log: "+found.length+"/"+logged.length+" · Candidates: "+candidates.length+" · Enriched: "+metadata.size+" · Qualified: "+pool.length;
@@ -378,7 +378,7 @@ async function retrieveNextBatch(){
    // Re-evaluate the existing backlog before declaring the catalog exhausted.
    const backlog=feedbackAdjustedPool();
    if(backlog.length){
-    track("pipeline_audit",{payload:{retrieval_round:retrievalRound,reason:"retrieval_exhausted_backlog_used",backlog:backlog.length,returned,previouslyKnown,withinRound}});
+    pendingPipelineAudit={retrieval_round:retrievalRound,reason:"retrieval_exhausted_backlog_used",backlog:backlog.length,returned,previouslyKnown,withinRound};
     showNext(backlog);
     setStatus("No new catalog candidates this time; displayed previously retrieved, never-shown films with verified cinematic evidence.");
     return;
@@ -416,7 +416,7 @@ async function retrieveNextBatch(){
     multiSignal:strongCount,singleSignal:partialCount,synopsisOnly,independent,metadata:meta.size
   };
   console.info("[Afterlogue Pipeline Audit]",rejected);
-  track("pipeline_audit",{payload:{retrieval_round:retrievalRound,source:browseItems.length?"lab-browse":"fallback",provider:browse.audit||null,returned,invalid,previouslyKnown,withinRound,failed,...rejected}});
+  pendingPipelineAudit={retrieval_round:retrievalRound,source:browseItems.length?"lab-browse":"fallback",providerPlans:Number(browse.audit?.plans)||0,returned,invalid,previouslyKnown,withinRound,failed,...rejected};
   $("retrieval-audit").textContent=summary+" · "+meta.size+" enriched · "+
    eligible.length+" qualified · "+synopsisOnly+" plot-only clues · "+independent+" independently supported · "+preBalance.length+" before balance → "+qualified.length+" after balance · "+strongCount+" multi-signal · "+partialCount+" single-signal · "+
    "Excluded: "+rejected.lowScore+" low score, "+rejected.notPersonalized+" legacy-unpersonalized, "+rejected.unmatched+" unmatched, "+rejected.noCinematicEvidence+" no cinematic evidence, "+rejected.balanceRemoved+" by balancing · "+
@@ -470,7 +470,8 @@ function showNext(override=null){
  $("results").replaceChildren();
  if(!next.length){track("batch_error",{payload:{reason:"empty_selection"}});const d=document.createElement("div");d.className="empty";d.textContent="No supported Log connections were found in this batch. The lab will not fill the shelf with genre-only guesses."; $("results").append(d);$("again").disabled=false;return}
  page++;$("page-num").textContent=String(page).padStart(3,"0");
- track("batch_shown",{payload:{titles:next.map((item,i)=>({key:item.key,title:item.title,year:item.year,rank:i+1,score:Math.round(item.score*10)/10,signals:item.cinematicSignalCount||0,reason:String(item.cinematicExplanation||"").slice(0,230),evidence:item.cinematicEvidenceDetails||[],anchor:item.cinematicAnchor||null})),retrieval_round:retrievalRound}});
+ track("batch_shown",{payload:{titles:next.map((item,i)=>({key:item.key,title:item.title,year:item.year,rank:i+1,score:Math.round(item.score*10)/10,signals:item.cinematicSignalCount||0,reason:String(item.cinematicExplanation||"").slice(0,230),evidence:item.cinematicEvidenceDetails||[],anchor:item.cinematicAnchor||null})),retrieval_round:retrievalRound,pipeline_audit:pendingPipelineAudit}});
+ pendingPipelineAudit=null;
  for(const item of next){
   seen.add(item.key);
   const card=document.createElement("article");card.className="movie";
