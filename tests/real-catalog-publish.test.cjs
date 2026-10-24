@@ -5,15 +5,17 @@ test('published digest contains only allowed numeric fields and fixed fictional 
  const raw={kind:'afterlogue-public-catalog-smoke-v1',checkedAt:'2026-10-24T07:00:00.000Z',
   provider:{requests:12,failed:1,privateToken:'NEVER_PUBLISH'},
   summary:{profilesAttempted:2,profilesCompleted:1,
-   fingerprintRawKeywordCoverage:0,candidateQualificationRate:.47,
+   fingerprintRawKeywordCoverage:0,candidateQualificationRate:.47,keywordSpecificLinkRate:.24,
    leakedFilm:'PRIVATE_FILM_TITLE',consumerName:'DO_NOT_LEAK'},
   profiles:[{profile:'Private real human',status:'completed',found:35,
-   evaluated:24,qualified:8,withOriginalKeywords:0,
+   evaluated:24,qualified:8,withOriginalKeywords:0,specificKeywordLinkedTitles:5,
    diagnosticHint:'single-signal-evidence',movieTitle:'PRIVATE_FILM_TITLE',
    personalEmail:'private@example.com',secret:'NEVER_PUBLISH'}]};
  const publicDigest=sanitize(raw),s=JSON.stringify(publicDigest);
  assert.equal(publicDigest.summary.profilesCompleted,1);
  assert.equal(publicDigest.summary.candidateQualificationRate,.47);
+ assert.equal(publicDigest.summary.keywordSpecificLinkRate,.24);
+ assert.equal(publicDigest.profiles[0].specificKeywordLinkedTitles,5);
  assert.equal(publicDigest.profiles[0].profile,'Fictional Cinephile');
  assert.equal(publicDigest.profiles[0].withOriginalKeywords,0);
  assert.equal(publicDigest.requests,12);
