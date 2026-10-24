@@ -75,6 +75,14 @@
     d.type==="specific_theme"?"shared theme — "+d.value:
     d.type==="tone"?"shared tone — "+d.value:
     d.type==="pacing"?"shared pacing — "+d.value:d.type.replace(/_/g," ")+" — "+d.value;
+   const baseScore=item.score+adjustment;
+   // The older ranker applies a shallow-evidence penalty because it cannot
+   // read plot clues. Recover a small score ONLY when independent synopsis
+   // evidence is corroborated and is not contradicted by negative impressions.
+   const plotSupport=evidence*2.4+Math.min(2,Math.max(0,matches.length-1)*.8)-
+    negativePenalty*2.2;
+   const recovered=synopsisOnly&&independentEvidence&&baseScore<=0&&plotSupport>=2.5;
+   const finalScore=recovered?Math.min(8,plotSupport):baseScore;
    const explanation=matches.length?
     (synopsisOnly?"Possible fit from plot descriptions, not a verified style match: ":
       "Shared catalog and plot evidence from your Log: ")+
@@ -82,7 +90,8 @@
      m.details.slice(0,2).map(formatDetail).join("; ")+")").join("; ")+
      (matches.length>2?"; plus "+(matches.length-2)+" other positive Log matches":"")+"."
     :"No supported connection found in available catalog or synopsis evidence.";
-   return {...item,score:item.score+adjustment,cinematicEvidence:evidence,
+   return {...item,score:finalScore,cinematicEvidence:evidence,
+    cinematicSynopsisRecovered:recovered,
     cinematicMetadata:multiEvidence?"specific":"partial",
     cinematicSynopsisOnly:synopsisOnly,
     cinematicIndependent:independentEvidence,
