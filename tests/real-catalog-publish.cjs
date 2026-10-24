@@ -22,6 +22,8 @@ const metrics=[
  'keywordMultiLabelRate','keywordNegativeOverlapRate','keywordNegativeSpecificRate',
  'keywordNegativeOnlyRate','keywordPositiveOnlyRate','keywordMixedEvidenceRate',
  'keywordNegativeControlProfiles','keywordShadowNegativesUnresolved',
+ 'keywordDifferentLabelConflictRate','keywordQualifiedWithMixedEvidence',
+ 'keywordQualifiedWithExactConflict','keywordQualifiedWithNegativeOnly',
  'meanPotentialFingerprintLinks','meanPotentialNewPlotLinks','multiSignalEligibleShare',
  'linkedOnlyYield','browseOnlyYield','sharedRouteYield',
  'meanMissingEvidenceRejections','meanLowScoreRejections','meanUnanchoredRejections',
@@ -38,7 +40,8 @@ const fields=[
  'multiKeywordLinkedTitles','negativeKeywordCollisions','negativeKeywordAnchors',
  'unresolvedNegativeControls','negativeKeywordLinkedTitles',
  'negativeOnlyKeywordLinkedTitles','positiveOnlyKeywordLinkedTitles',
- 'mixedKeywordEvidenceTitles',
+ 'mixedKeywordEvidenceTitles','differentLabelConflictTitles',
+ 'qualifiedMixedEvidence','qualifiedExactConflict','qualifiedNegativeOnly',
  'withSynopsis','withCreatorCredit','withMappedKeywords','withOriginalKeywords',
  'withPlotClues','qualifiedTitleLinkedOnly','evaluatedTitleLinkedOnly',
  'qualifiedBrowseOnly','evaluatedBrowseOnly','bestEvidenceSingle','bestEvidenceMultiple'
