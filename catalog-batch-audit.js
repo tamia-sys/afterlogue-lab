@@ -330,7 +330,7 @@
       editorialReviewedCandidates:observationSummary?.reviewedCandidates||0,
       editorialMultiDimensionCandidates:observationSummary?.candidatesWithMultiDimensionEditorialMatch||0,
       editorialQualifiedMultiDimensionCandidates:observationSummary?.qualifiedCandidatesWithMultiDimensionEditorialMatch||0,
-      editorialUnknownCandidates:observationSummary?.fullyUnknownCandidates||candidates.length,
+      editorialUnknownCandidates:observationSummary?.fullyUnknownCandidates??candidates.length,
       editorialConflictedCandidates:observationSummary?.candidatesWithAmbiguousEditorialEvidence||0
     };
     const row={profile:profile.name,historyTitles:found.length,positiveAnchors:selected.length,
