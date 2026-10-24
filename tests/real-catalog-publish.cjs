@@ -18,6 +18,8 @@ const metrics=[
  'fingerprintExtraPlotClueCoverage','fingerprintExplicitDeviceCoverage',
  'fingerprintRawKeywordLinkCoverage','fingerprintRawOnlyLinkCoverage',
  'fingerprintRawUnqualifiedCoverage',
+ 'keywordRawLinkRate','keywordSpecificLinkRate','keywordGenericOnlyRate',
+ 'keywordMultiLabelRate','keywordNegativeOverlapRate','keywordNegativeControlProfiles',
  'meanPotentialFingerprintLinks','meanPotentialNewPlotLinks','multiSignalEligibleShare',
  'linkedOnlyYield','browseOnlyYield','sharedRouteYield',
  'meanMissingEvidenceRejections','meanLowScoreRejections','meanUnanchoredRejections',
@@ -30,6 +32,8 @@ const fields=[
  'firstShelfComplete','secondShelfComplete','noEvidence','lowScore',
  'extraPlotClueTitles','potentialNewPlotLinks','separateStoryDeviceTitles',
  'rawKeywordLinkedTitles','rawKeywordOnlyTitles','rawKeywordUnqualifiedTitles',
+ 'specificKeywordLinkedTitles','genericKeywordOnlyTitles',
+ 'multiKeywordLinkedTitles','negativeKeywordCollisions','negativeKeywordAnchors',
  'withSynopsis','withCreatorCredit','withMappedKeywords','withOriginalKeywords',
  'withPlotClues','qualifiedTitleLinkedOnly','evaluatedTitleLinkedOnly',
  'qualifiedBrowseOnly','evaluatedBrowseOnly','bestEvidenceSingle','bestEvidenceMultiple'
