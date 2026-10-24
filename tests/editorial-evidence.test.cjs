@@ -95,3 +95,14 @@ test('unsupported fields and empty dimensions are not silently treated as confir
  assert.equal(evidence.parse({...a,observations:{}}).reason,'no-observed-dimensions');
  assert.throws(()=>evidence.audit({}),/Expected annotation array/);
 });
+
+test('fabricated accepted snapshots cannot bypass independently sourced review validation',()=>{
+ const legit=annotation('fictional-film-a',{pacing:'measured'});
+ const fake={accepted:true,filmKey:'fictional-film-b',
+  values:{pacing:'measured',narrativeStructure:'episodic'}};
+ const contrast=evidence.contrast(legit,fake);
+ assert.equal(contrast.comparable,false);
+ assert.equal(contrast.reason,'missing-reviewed-observation');
+ const parsed=evidence.parse(legit);
+ assert.equal(evidence.contrast(parsed,legit).comparable,true);
+});
