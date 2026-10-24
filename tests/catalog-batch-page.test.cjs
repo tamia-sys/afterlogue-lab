@@ -3,7 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 test('live Lab-only page loads optional public-catalog batch auditor and has operational controls',()=>{
- assert.match(html,/<script src="catalog-batch-audit\.js\?v=real-catalog-3"><\/script>/);
+ assert.match(html,/<script src="catalog-batch-audit\.js\?v=real-catalog-4"><\/script>/);
  for(const id of ['run-batch','cancel-batch','export-batch','batch-status','batch-output'])
   assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1);
  assert.match(html,/AfterlogueCatalogBatchAudit\.run\(/);
@@ -20,6 +20,7 @@ test('source-labeled cinematic fingerprint is shown only in shadow diagnostics',
  assert.match(html,/fingerprint:window\.AfterlogueCinematicFingerprint/);
  assert.match(html,/fpCandidates\.withExplicitNarrativeDeviceClue/);
  assert.match(html,/fingerprintExtraPlotClueCoverage/);
+ assert.match(html,/fingerprintRawKeywordLinkedTitles/);
 });
 test('feedback calibration uses the score frozen at first display',()=>{
  assert.match(html,/<script src="interest-calibration\.js\?v=calibration-1"><\/script>/);
