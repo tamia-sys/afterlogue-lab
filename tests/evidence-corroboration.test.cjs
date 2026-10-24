@@ -49,6 +49,20 @@ test('a negative-control conflict persists even if a candidate has verified corr
  assert.equal(output.corroboratedWithNegativeCollision,1);
  assert.equal(output.qualifiedCorroboratedWithNegativeCollision,1);
 });
+test('distinct disliked keywords are mixed evidence, NOT exact same-keyword collisions',()=>{
+ const out=check({
+  positive:[film('love',{tags:['railway station'],directors:['tmdb-person-48']})],
+  negative:[film('dislike',{tags:['remote island']})],
+  candidates:[film('film',{tags:['railway station','remote island'],directors:['tmdb-person-48']})],
+  qualifiedKeys:['film']
+ });
+ assert.equal(out.keywordLinked,1);
+ assert.equal(out.keywordWithNegativeCollision,0);
+ assert.equal(out.corroboratedWithNegativeCollision,0);
+ assert.equal(out.keywordWithMixedNegativeEvidence,1);
+ assert.equal(out.corroboratedWithMixedNegativeEvidence,1);
+ assert.equal(out.qualifiedWithMixedNegativeEvidence,1);
+});
 test('high-frequency and generic tags do not masquerade as independently corroborated',()=>{
  const one=film('like',{tags:['love','hospital']});
  const candidates=[film('a',{tags:['love','hospital']}),film('b',{tags:['hospital']}),film('c',{tags:['hospital']}),film('d',{tags:['hospital']})];
