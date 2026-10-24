@@ -68,7 +68,7 @@ if(!eligibility)throw Error("Recommendation eligibility policy failed to load.")
   const p=profiles[Number($("persona").value)]||profiles[0];
   const row={session_id:testId,event_type,persona:p.name,phase:Number($("phase").value)||0,
    batch_number:page,movie_key:movie?.key||null,movie_title:movie?.title||null,choice,
-   payload:{...payload,build:"taste-v2-experiment-1",run:runToken}};
+   payload:{...payload,build:"taste-v2-experiment-2",run:runToken}};
   const task=async()=>{
    try{
     const res=await fetch(telemetryEndpoint,{method:"POST",headers:{"apikey":telemetryKey,
@@ -293,7 +293,9 @@ function cinematicRerank(entries){
 }
 function attractionSimilarity(a={},b={}){
  const overlap=(x,y)=>(x||[]).filter(v=>(y||[]).includes(v)).length;
- return overlap(a.themes,b.themes)*1.4+overlap(a.tones,b.tones)*1.4+overlap(a.genres,b.genres)*.7+overlap(a.directors,b.directors)*1.5;
+ // Broad genre overlap is weak evidence; cinematic traits carry more weight.
+ return overlap(a.themes,b.themes)*1.4+overlap(a.tones,b.tones)*1.4+
+  overlap(a.genres,b.genres)*.3+overlap(a.directors,b.directors)*1.5;
 }
 function feedbackAdjustedPool(allowedKeys=null){
  // Attraction is not a watched-film impression. A pass is a soft, session-only
