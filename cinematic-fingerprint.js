@@ -52,6 +52,7 @@
   const knownTopics=clean(f.narrativeThemes);
   const fromText=detect(synopsis,topics);
   const plotTopics=clean([...knownTopics,...fromText]);
+  const rawKeywordNames=clean(f.keywordNames||f.rawKeywords||entry.keywordNames);
   const narrativeDevices=detect(synopsis,devices);
   const result={
    key:typeof entry.key==="string"?entry.key:null,
@@ -63,6 +64,7 @@
    },
    // Mapped keyword labels are hints; do not portray as observed film style.
    keywordHints:{
+    rawKeywordNames:record(rawKeywordNames,"tmdb-community-keyword","catalog-label-not-verified-film-style"),
     themes:record(f.themes,"tmdb-keyword-map","inferred-from-keyword"),
     tones:record(f.tones,"tmdb-keyword-map","inferred-from-keyword")
    },
@@ -82,7 +84,7 @@
    ],
    sourceEvidence:{
     hasSynopsis:!!synopsis.trim(),
-    hasOriginalKeywordNames:false, // Not exposed by current catalog response.
+    hasOriginalKeywordNames:rawKeywordNames.length>0, // Not yet exposed by current Lab catalog response.
     hasGenres:clean(f.genres).length>0,
     hasCredits:clean([...(f.directors||[]),...(f.writers||[])]).length>0,
     hasMappedKeywords:clean([...(f.themes||[]),...(f.tones||[])]).length>0,
@@ -104,6 +106,8 @@
    ["shared-genre","broad",overlap(a.verified.genres,b.verified.genres)],
    ["shared-mapped-theme","keyword-hint",overlap(a.keywordHints.themes,b.keywordHints.themes)],
    ["shared-mapped-tone","keyword-hint",overlap(a.keywordHints.tones,b.keywordHints.tones)],
+   ["shared-original-catalog-keyword","community-catalog-label",
+     overlap(a.keywordHints.rawKeywordNames,b.keywordHints.rawKeywordNames)],
    ["shared-synopsis-topic","plot-clue",overlap(a.synopsisClues.plotTopics,b.synopsisClues.plotTopics)],
    ["shared-explicit-device","plot-clue",overlap(a.synopsisClues.explicitDevices,b.synopsisClues.explicitDevices)]
   ].filter(([, ,values])=>values.length).map(([type,evidenceLevel,values])=>({type,evidenceLevel,values}));
@@ -120,13 +124,14 @@
   const originalSynopses=count(f=>f.sourceEvidence.hasSynopsis);
   const verifiedCreator=count(f=>f.sourceEvidence.hasCredits);
   const mappedKeywords=count(f=>f.sourceEvidence.hasMappedKeywords);
+  const originalKeywords=count(f=>f.sourceEvidence.hasOriginalKeywordNames);
   const plotClues=count(f=>f.sourceEvidence.hasLiteralPlotClues);
   const devices=count(f=>f.synopsisClues.explicitDevices.values.length>0);
   return {titles:n,withSynopsis:originalSynopses,withVerifiedCredits:verifiedCreator,
-   withMappedKeywordHints:mappedKeywords,withAnyLiteralPlotClue:plotClues,
+   withMappedKeywordHints:mappedKeywords,withOriginalKeywordNames:originalKeywords,withAnyLiteralPlotClue:plotClues,
    withExplicitNarrativeDeviceClue:devices,
    synopsisCoverage:percent(originalSynopses),verifiedCreditCoverage:percent(verifiedCreator),
-   mappedKeywordHintCoverage:percent(mappedKeywords),literalPlotClueCoverage:percent(plotClues),
+   mappedKeywordHintCoverage:percent(mappedKeywords),originalKeywordNameCoverage:percent(originalKeywords),literalPlotClueCoverage:percent(plotClues),
    metadataWithoutPlotClues:count(f=>!f.sourceEvidence.hasLiteralPlotClues),
    note:"These fields describe available evidence, not truth of artistic interpretation. Unknown remains unknown."};
  }
