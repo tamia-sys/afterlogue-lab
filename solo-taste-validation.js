@@ -14,7 +14,8 @@
  function ratingMap(input){
   if(Array.isArray(input))return new Map(input.map(x=>[
    x?.title_key||x?.key,x?.rating]));
-  if(input instanceof Map)return new Map(input);
+  if(input instanceof Map)return new Map([...input].map(([key,x])=>
+   [key,typeof x==="string"?x:x?.rating]));
   if(input&&typeof input==="object")return new Map(Object.entries(input).map(
    ([key,x])=>[key,typeof x==="string"?x:x?.rating]));
   return new Map();
@@ -78,15 +79,15 @@
   });
  }
  function stability({engine,entries=[],baseline={},additional={},
-  favorites=[],watchlist=[],probes=[]}={}){
+  favorites=[],watchlist=[],probes=[],timestamps={},now=Date.now()}={}){
   if(!engine?.buildTasteProfile||!engine?.tasteMatch||
     !Array.isArray(entries)||!Array.isArray(probes)||probes.length>30)
    throw Error("Invalid individual-only stability inputs");
   const first=ratingMap(baseline),second=ratingMap(additional);
   const merged=new Map(first);
   for(const [key,rating] of second)merged.set(key,rating);
-  const base=engine.buildTasteProfile({entries,impressions:first,favorites,watchlist}),
-   expanded=engine.buildTasteProfile({entries,impressions:merged,favorites,watchlist});
+  const base=engine.buildTasteProfile({entries,impressions:first,favorites,watchlist,timestamps,now}),
+   expanded=engine.buildTasteProfile({entries,impressions:merged,favorites,watchlist,timestamps,now});
   const byKey=new Map(entries.map(x=>[x.key,x]));
   const scores=[];
   for(const probe of probes){
