@@ -42,3 +42,12 @@ test('inline browser study script parses and file import is bounded',()=>{
  assert.match(html,/files\.length!==2/);
  assert.match(html,/files\.some\(x=>x\.size>500000\)/);
 });
+
+test('unseen film confirmation and missing-review abstention remain explicit',()=>{
+ assert.match(html,/I have not watched this film/);
+ assert.match(html,/for\(const x of consensus\.films\)/);
+ assert.match(html,/check\.type="checkbox"/);
+ assert.match(html,/select\.disabled=true/);
+ assert.match(html,/row\.querySelector\('input\[type="checkbox"\]'\)\.checked/);
+ assert.match(html,/absent evidence will trigger abstention/);
+});
