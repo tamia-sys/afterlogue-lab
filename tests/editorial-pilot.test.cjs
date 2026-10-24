@@ -105,3 +105,44 @@ test('bad and out-of-slate records never escape into the aggregate report',()=>{
  assert.equal(JSON.stringify(r).includes('secret-film'),false);
  assert.equal(JSON.stringify(r).includes('secret@example.com'),false);
 });
+
+test('chance-adjusted Cohen kappa correct for six paired films with variable categories',()=>{
+ const ids=pilot.slate.slice(0,6).map(x=>x.key);
+ const first=['measured','measured','measured','brisk','brisk','brisk'];
+ const second=['measured','measured','brisk','brisk','brisk','measured'];
+ const a=packet('reviewer-01',ids.map((id,i)=>record(id,'reviewer-01',{pacing:first[i]})));
+ const b=packet('reviewer-02',ids.map((id,i)=>record(id,'reviewer-02',{pacing:second[i]})));
+ const result=compare([a,b]);
+ assert.equal(result.reliabilityStatus,'exploratory-only');
+ assert.equal(result.kappaEstimatedDimensions,1);
+ assert.equal(result.reliability.pacing.status,'exploratory');
+ assert.equal(result.reliability.pacing.overlappingFilms,6);
+ assert.equal(result.reliability.pacing.expectedChanceAgreement,.5);
+ assert.ok(Math.abs(result.reliability.pacing.cohensKappa-1/3)<1e-10);
+ assert.equal(result.reliability.visualApproach.status,'insufficient-overlap');
+ assert.equal(result.reliability.visualApproach.cohensKappa,null);
+});
+test('apparently perfect agreement in one category is not presented as a meaningful reliability statistic',()=>{
+ const ids=pilot.slate.slice(0,8).map(x=>x.key);
+ const a=packet('reviewer-01',ids.map(id=>record(id,'reviewer-01',{pacing:'measured'})));
+ const b=packet('reviewer-02',ids.map(id=>record(id,'reviewer-02',{pacing:'measured'})));
+ const result=compare([a,b]);
+ assert.equal(result.observedPairAgreement,1);
+ assert.equal(result.reliability.pacing.status,'no-category-variation');
+ assert.equal(result.reliability.pacing.cohensKappa,null);
+ assert.equal(result.kappaEstimatedDimensions,0);
+ assert.equal(result.reliabilityStatus,'insufficient-overlap-or-variation');
+});
+test('sparse agreement and multireviewer agreement never generate overconfident chance corrections',()=>{
+ const ids=pilot.slate.slice(0,3).map(x=>x.key);
+ const a=packet('reviewer-01',ids.map((id,i)=>record(id,'reviewer-01',{pacing:i===0?'measured':'brisk'})));
+ const b=packet('reviewer-02',ids.map((id,i)=>record(id,'reviewer-02',{pacing:i===0?'brisk':'measured'})));
+ const sparse=compare([a,b]);
+ assert.equal(sparse.reliability.pacing.status,'insufficient-overlap');
+ assert.equal(sparse.reliability.pacing.cohensKappa,null);
+ const three=packet('reviewer-03',ids.map(id=>record(id,'reviewer-03',{pacing:'measured'})));
+ const multi=compare([a,b,three]);
+ assert.equal(multi.reliabilityStatus,'two-reviewers-required');
+ assert.equal(multi.kappaEstimatedDimensions,0);
+ assert.equal(multi.reliability.pacing.cohensKappa,null);
+});
