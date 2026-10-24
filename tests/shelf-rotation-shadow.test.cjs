@@ -34,7 +34,13 @@ test('three sessions keep first 5 identical, never reuse an already chosen film,
   assert.equal(result.aggregate.noRepeatKeys,true);
   assert.equal(new Set(result.shadow.map(x=>x.key)).size,result.shadow.length);
   assert.equal(result.shadow.length,result.baseline.length);
-  const scores=new Map(result.baseline.map(x=>[x.key,x.score]));
+  // A promoted title may sit outside the original first 15, so compare
+  // every chosen score to its ORIGINAL eligible-pool score, not a shortlist.
+  const ranked=engine.rank({entries:fixture.catalog,category:profile.category,
+    impressions:profile.impressions,timestamps:profile.timestamps||{}});
+  const eligible=policy.eligible(cinematic.rank(ranked,fixture.catalog,profile.impressions),
+    {ratedKeys:Object.keys(profile.impressions)});
+  const scores=new Map(eligible.map(x=>[x.key,x.score]));
   assert.ok(result.shadow.every(x=>scores.get(x.key)===x.score));
   assert.equal(result.aggregate.scoreFloorPreserved,true);
   const bc=collisionCount(result.baseline),sc=collisionCount(result.shadow);
