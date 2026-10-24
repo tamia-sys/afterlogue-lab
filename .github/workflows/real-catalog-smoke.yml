@@ -9,6 +9,7 @@ on:
       - tests/real-catalog-publish.cjs
       - tests/real-catalog-publish.test.cjs
       - catalog-batch-audit.js
+      - tests/catalog-batch-audit.test.cjs
       - cinematic-fingerprint.js
       - keyword-signal-audit.js
       - tests/keyword-signal-audit.test.cjs
@@ -29,7 +30,7 @@ jobs:
         with:
           node-version: '22'
       - name: Validate no-credentials catalog runner with fictional fixtures
-        run: node --test tests/real-catalog-smoke.test.cjs tests/real-catalog-publish.test.cjs tests/keyword-signal-audit.test.cjs
+        run: node --test tests/real-catalog-smoke.test.cjs tests/real-catalog-publish.test.cjs tests/keyword-signal-audit.test.cjs tests/catalog-batch-audit.test.cjs
       - name: Verify public film-catalog metadata on two fictional viewers
         run: node tests/real-catalog-smoke.cjs --profiles 2 --candidates 24 --plans 1 --output reports/real-catalog-smoke.json
       - name: Add aggregate findings to run summary
