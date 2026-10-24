@@ -31,6 +31,8 @@ const metrics=[
  'corroborationQualifiedWithIndependentFacet','corroborationQualifiedKeywordOnly',
  'corroborationWithNegativeCollision','corroborationWithNegativeCollisionAndIndependentFacet',
  'corroborationWithMixedNegativeEvidence','corroborationWithMixedNegativeEvidenceAndIndependentFacet',
+ 'editorialReviewedPositive','editorialReviewedCandidates','editorialMultiDimensionCandidates',
+ 'editorialQualifiedMultiDimensionCandidates','editorialUnknownCandidates','editorialConflictedCandidates',
  'meanPotentialFingerprintLinks','meanPotentialNewPlotLinks','multiSignalEligibleShare',
  'linkedOnlyYield','browseOnlyYield','sharedRouteYield',
  'meanMissingEvidenceRejections','meanLowScoreRejections','meanUnanchoredRejections',
@@ -54,6 +56,8 @@ const fields=[
  'corroboratedQualifiedLinks','uncorroboratedQualifiedKeywordLinks',
  'corroboratedButDislikeCollision','differentLogAnchorSupportOnly',
  'keywordWithMixedNegativeEvidence','corroboratedWithMixedNegativeEvidence',
+ 'editorialReviewedPositive','editorialReviewedCandidates','editorialMultiDimensionCandidates',
+ 'editorialQualifiedMatches','editorialUnknownCandidates','editorialConflictedCandidates',
  'withSynopsis','withCreatorCredit','withMappedKeywords','withOriginalKeywords',
  'withPlotClues','qualifiedTitleLinkedOnly','evaluatedTitleLinkedOnly',
  'qualifiedBrowseOnly','evaluatedBrowseOnly','bestEvidenceSingle','bestEvidenceMultiple'
