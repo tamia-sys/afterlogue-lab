@@ -45,6 +45,15 @@ test('real-catalog batch processor measures two fake provider snapshots without 
  assert.equal(result.summary.duplicateViolations,0);
  assert.ok(result.summary.meanUniqueRetrieved>=24);
  assert.ok(result.profiles.every(x=>x.qualified>0));
+ assert.ok(result.profiles.every(x=>x.candidateAccounting==='reconciled'));
+ assert.ok(result.profiles.every(x=>x.lowScoreRejections+x.missingEvidenceRejections+
+  x.unanchoredRejections+x.otherRejections+x.qualified===x.evaluatedCandidates));
+ assert.ok(result.profiles.every(x=>x.evaluatedLinkedOnly+x.evaluatedBrowseOnly+
+  x.evaluatedBoth===x.evaluatedCandidates));
+ assert.ok(result.profiles.every(x=>x.qualifiedLinkedOnly+x.qualifiedBrowseOnly+
+  x.qualifiedBoth===x.qualified));
+ assert.equal(result.summary.candidateQualificationRate>0,true);
+ assert.ok(result.summary.oneBestEvidenceTypeCount+result.summary.multipleBestEvidenceTypeCount>=0);
  assert.ok(result.summary.candidateThemeCoverage>0);
  assert.ok(options.calls.every(x=>['recommend','lab-browse'].includes(x.mode)));
  assert.equal(options.calls.filter(x=>x.mode==='lab-browse').length,2);
@@ -59,6 +68,8 @@ test('records individual provider failures without inventing coverage',async()=>
  assert.equal(result.summary.metadataFailures,1);
  assert.equal(result.summary.metadataReturnRate,0);
  assert.equal(result.profiles[0].candidateThemes,0);
+ assert.ok(['metadata-request-coverage','eligibility-coverage','single-signal-evidence',
+  'candidate-supply','no-obvious-structural-blocker'].includes(result.profiles[0].diagnosticHint));
 });
 test('cancellation stops before starting another fictional viewer',async()=>{
  const options=fixtures();let stop=false;
