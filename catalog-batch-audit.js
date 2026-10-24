@@ -88,6 +88,8 @@
    corroborationQualifiedKeywordOnly:sum('corroborationQualifiedKeywordOnly'),
    corroborationWithNegativeCollision:sum('corroborationWithNegativeCollision'),
    corroborationWithNegativeCollisionAndIndependentFacet:sum('corroborationWithNegativeCollisionAndIndependentFacet'),
+   corroborationWithMixedNegativeEvidence:sum('corroborationWithMixedNegativeEvidence'),
+   corroborationWithMixedNegativeEvidenceAndIndependentFacet:sum('corroborationWithMixedNegativeEvidenceAndIndependentFacet'),
    keywordDifferentLabelConflictRate:ratio(sum('keywordDifferentLabelConflict'),sum('evaluatedCandidates')),
    multiSignalEligibleShare:ratio(sum('multiSignalEligible'),sum('qualified')),
    meanDistinctGenresFirstFive:mean('topGenres'),
@@ -302,7 +304,9 @@
       corroborationQualifiedWithIndependentFacet:corroborationStats?.qualifiedWithIndependentFacet||0,
       corroborationQualifiedKeywordOnly:corroborationStats?.qualifiedKeywordOnly||0,
       corroborationWithNegativeCollision:corroborationStats?.keywordWithNegativeCollision||0,
-      corroborationWithNegativeCollisionAndIndependentFacet:corroborationStats?.corroboratedWithNegativeCollision||0
+      corroborationWithNegativeCollisionAndIndependentFacet:corroborationStats?.corroboratedWithNegativeCollision||0,
+      corroborationWithMixedNegativeEvidence:corroborationStats?.keywordWithMixedNegativeEvidence||0,
+      corroborationWithMixedNegativeEvidenceAndIndependentFacet:corroborationStats?.corroboratedWithMixedNegativeEvidence||0
     };
     const row={profile:profile.name,historyTitles:found.length,positiveAnchors:selected.length,
      titleRequests:plans.length,recommendationFailures,browseFailures,metadataFailures,
