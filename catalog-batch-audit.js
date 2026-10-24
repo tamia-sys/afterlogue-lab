@@ -59,6 +59,9 @@
    fingerprintKeywordCoverage:ratio(sum('fingerprintWithMappedKeywords'),sum('evaluatedCandidates')),
    fingerprintRawKeywordCoverage:ratio(sum('fingerprintWithOriginalKeywords'),sum('evaluatedCandidates')),
    fingerprintAnyPlotClueCoverage:ratio(sum('fingerprintWithPlotClues'),sum('evaluatedCandidates')),
+   fingerprintRawKeywordLinkCoverage:ratio(sum('fingerprintRawKeywordLinkedTitles'),sum('evaluatedCandidates')),
+   fingerprintRawOnlyLinkCoverage:ratio(sum('fingerprintRawKeywordOnlyTitles'),sum('evaluatedCandidates')),
+   fingerprintRawUnqualifiedCoverage:ratio(sum('fingerprintRawKeywordUnqualifiedTitles'),sum('evaluatedCandidates')),
    multiSignalEligibleShare:ratio(sum('multiSignalEligible'),sum('qualified')),
    meanDistinctGenresFirstFive:mean('topGenres'),
    meanDistinctPositiveLogAnchorsFirstFive:mean('topAnchors'),
@@ -175,7 +178,9 @@
      fingerprintLinkedTitles:0,fingerprintNewPlotLinks:0,
      fingerprintWithSynopsis:0,fingerprintWithCreatorCredit:0,
      fingerprintWithMappedKeywords:0,fingerprintWithOriginalKeywords:0,
-     fingerprintWithPlotClues:0};
+     fingerprintWithPlotClues:0,
+     fingerprintRawKeywordLinkedTitles:0,fingerprintRawKeywordOnlyTitles:0,
+     fingerprintRawKeywordUnqualifiedTitles:0};
     if(fingerprint?.build&&fingerprint?.compare){
      const sourceItems=complete.filter(x=>["Loved","Liked"].includes(ratings[x.key]));
      const sourceFp=sourceItems.map(x=>({entry:x,fp:fingerprint.build(x)}));
@@ -190,8 +195,20 @@
       const extra=current.synopsisClues.plotTopics.values.filter(x=>!baseKnown.has(x));
       if(extra.length)fpSummary.fingerprintExtraPlotTitles++;
       if(current.synopsisClues.explicitDevices.values.length)fpSummary.fingerprintExplicitDeviceTitles++;
-      if(sourceFp.some(x=>fingerprint.compare(current,x.fp).specificLinkKinds>0))
+      const comparisons=sourceFp.map(x=>fingerprint.compare(current,x.fp));
+      if(comparisons.some(x=>x.specificLinkKinds>0))
        fpSummary.fingerprintLinkedTitles++;
+      // Community-tag coincidence is a candidate for investigation, not a
+      // verified recommendation reason. The live ranker ignores these labels.
+      const rawLabelConnections=comparisons.flatMap(x=>x.links
+       .filter(link=>link.type==="shared-original-catalog-keyword"));
+      const existingSpecific=comparisons.some(x=>x.links.some(link=>
+       link.type!=="shared-genre"&&link.type!=="shared-original-catalog-keyword"));
+      if(rawLabelConnections.length){
+       fpSummary.fingerprintRawKeywordLinkedTitles++;
+       if(!existingSpecific)fpSummary.fingerprintRawKeywordOnlyTitles++;
+       if(!eligibleKeys.has(candidate.key))fpSummary.fingerprintRawKeywordUnqualifiedTitles++;
+      }
       if(sourceFp.some(x=>{
        const otherKnown=new Set((x.entry.facets?.narrativeThemes||[]).map(v=>String(v).toLowerCase()));
        const otherExtra=x.fp.synopsisClues.plotTopics.values.filter(v=>!otherKnown.has(v));
