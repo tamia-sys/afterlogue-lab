@@ -58,8 +58,8 @@
   }).sort((a,b)=>b.score-a.score);
  }
  function feedbackSimilarity(a={},b={}){
-  return overlap(a.themes,b.themes)*1.4+overlap(a.tones,b.tones)*1.4+
-   overlap(a.genres,b.genres)*.3+overlap(a.directors,b.directors)*1.5;
+  return overlap(a.themes,b.themes).length*1.4+overlap(a.tones,b.tones).length*1.4+
+   overlap(a.genres,b.genres).length*.3+overlap(a.directors,b.directors).length*1.5;
  }
  return Object.freeze({rank,compare,feedbackSimilarity});
 });
