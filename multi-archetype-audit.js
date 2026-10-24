@@ -62,6 +62,7 @@
     ...(profile.watchlist||[]).map(keyOf)]);
    output.push({
     profile:profile.name,historyRated:rated.length,historyPositive:pos.length,
+    profileEvidenceStatus:pos.length<2?"insufficient-positive-history":"structural-only",
     historyNegative:unlike.size,supportedTasteLanes:likedLanes.size,
     candidatePool:raw.length,qualifiedPool:eligible.length,shelfSize:first.length,
     uniqueShelfLanes:counts.size,
@@ -82,6 +83,7 @@
    casesWithEmptyShelf:output.filter(x=>x.shelfSize===0).length,
    casesWithHighConcentration:output.filter(x=>x.shelfSize>=size&&x.topShelfDominance>=.8).length,
    casesWithRepeatLeaks:output.filter(x=>x.sourceOverlapViolations||x.duplicateShelfViolations).length,
+   casesWithSparsePersonalHistory:output.filter(x=>x.profileEvidenceStatus==="insufficient-positive-history").length,
    note:"Structural stress test of unchanged recommendation-engine and eligibility policy. No community tag, editorial observations, user Log or actual accuracy data is read."
   });
  }
