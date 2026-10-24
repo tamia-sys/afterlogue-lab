@@ -220,7 +220,7 @@ async function generate(){
  }
  allRanked=cinematicRerank(ranked);
  pool=feedbackAdjustedPool();
- const initialQualified=allRanked.filter(x=>x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
+ const initialQualified=allRanked.filter(x=>!ratingSignals[x.key]&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
  track("pipeline_audit",{payload:{retrieval_round:0,candidatePool:candidateMap.size,evaluated:candidates.length,deferred:initialDeferred,metadata:metadata.size,ranked:allRanked.length,verifiedCinematic:initialQualified.length,balanced:pool.length,selected:Math.min(5,pool.length),source:"initial_mixed"}});
  $("retrieval-audit").textContent+=" · "+initialQualified.length+" verified cinematic matches · "+pool.length+" qualified";
  const excluded=new Set(source.map(x=>x.key));pool=pool.filter(x=>!excluded.has(x.key));
@@ -285,7 +285,13 @@ function feedbackAdjustedPool(allowedKeys=null){
  // Broad genre overlap is a candidate-generation signal, not proof of taste.
  // Require a positive Log anchor plus an independently verified cinematic
  // link for a *qualified* personalized recommendation.
- const eligible=allRanked.filter(x=>(!allowedKeys||allowedKeys.has(x.key))&&!seen.has(x.key)&&!attraction.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
+ // A Log impression always takes precedence over recommendation eligibility.
+ // The initial display path also calls this function, so filtering only the
+ // initial pool after balancing is insufficient.
+ const logKeys=new Set(Object.keys(ratingSignals));
+ const eligible=allRanked.filter(x=>(!allowedKeys||allowedKeys.has(x.key))&&
+  !logKeys.has(x.key)&&!seen.has(x.key)&&!attraction.has(x.key)&&
+  x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
  const adjusted=eligible.map(item=>{
    const positive=likes.reduce((sum,x)=>sum+Math.min(2.5,attractionSimilarity(item.facets,x.facets))*.65,0);
    const negative=passes.reduce((sum,x)=>sum+Math.min(2.5,attractionSimilarity(item.facets,x.facets))*.28,0);
@@ -373,7 +379,7 @@ async function retrieveNextBatch(){
   const freshKeys=new Set([...enriched.map(x=>x.key),...pending]);
   // Rank against the entire Log, selecting never-shown candidates from
   // both new retrieval and the previously unused candidate backlog.
-  const preBalance=ranked.filter(x=>freshKeys.has(x.key)&&!seen.has(x.key)&&!attraction.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
+  const preBalance=ranked.filter(x=>freshKeys.has(x.key)&&!ratingSignals[x.key]&&!seen.has(x.key)&&!attraction.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
   const qualified=feedbackAdjustedPool(freshKeys);
   const strongCount=qualified.filter(x=>x.cinematicSignalCount>=2).length;
   const partialCount=qualified.filter(x=>x.cinematicSignalCount===1).length;
@@ -435,7 +441,11 @@ function updateDiscoveryAudit(){
  sparse+" with none. Not marked known does NOT establish a new discovery. These are session-only signals, not validated watch intent." ;
 }
 function showNext(override=null){
- const next=(override||feedbackAdjustedPool()).filter(x=>!seen.has(x.key)).slice(0,5);
+ // Final safety gate: never display rated Log films, even when callers
+ // supply an override or the recommendation engine changes its behavior.
+ const ratedKeys=new Set(Object.keys(ratingSignals));
+ const next=(override||feedbackAdjustedPool()).filter(x=>
+  !ratedKeys.has(x.key)&&!seen.has(x.key)).slice(0,5);
  $("results").replaceChildren();
  if(!next.length){track("batch_error",{payload:{reason:"empty_selection"}});const d=document.createElement("div");d.className="empty";d.textContent="No verified cinematic matches are available from this batch. The lab will not fill the shelf with weak genre-only guesses."; $("results").append(d);$("again").disabled=false;return}
  page++;$("page-num").textContent=String(page).padStart(3,"0");
