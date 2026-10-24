@@ -14,11 +14,11 @@ test('live Lab-only page loads optional public-catalog batch auditor and has ope
  assert.match(html,/shouldCancel:\(\)=>batchCancelled/);
 });
 test('source-labeled cinematic fingerprint is shown only in shadow diagnostics',()=>{
- assert.match(html,/cinematic-fingerprint\\.js\\?v=fingerprint-1/);
+ assert.match(html,/cinematic-fingerprint\.js\?v=fingerprint-1/);
  assert.match(html,/id="fingerprint-audit"/);
- assert.match(html,/AfterlogueCinematicFingerprint\\.summarize\\(choices\\)/);
- assert.match(html,/fingerprint:window\\.AfterlogueCinematicFingerprint/);
- assert.match(html,/fpCandidates\\.withExplicitNarrativeDeviceClue/);
+ assert.match(html,/AfterlogueCinematicFingerprint\.summarize\(choices\)/);
+ assert.match(html,/fingerprint:window\.AfterlogueCinematicFingerprint/);
+ assert.match(html,/fpCandidates\.withExplicitNarrativeDeviceClue/);
  assert.match(html,/fingerprintExtraPlotClueCoverage/);
 });
 test('feedback calibration uses the score frozen at first display',()=>{
