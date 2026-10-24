@@ -49,7 +49,8 @@
     else if(l&&r){conflicted.push(field);dimensionsDisagreed++}
     else unobserved.push(field);
    }
-   const usable=Object.keys(agreed).length>=2;
+   // Unresolved firsthand-review disagreement is not a trusted taste feature.
+   const usable=Object.keys(agreed).length>=2&&conflicted.length===0;
    if(usable)withTwoAgreed++;
    films.push({key:entry.key,agreed,conflicted,unobserved,
     usable,agreedDimensionCount:Object.keys(agreed).length});
