@@ -6,11 +6,12 @@ require('../recommendation-engine.js');
 const engine=globalThis.AfterlogueRecommendationEngine;
 const cinematic=require('../taste-model-v2.js'),policy=require('../eligibility-policy.js');
 const anchorBalance=require('../evidence-balance.js');
+const fingerprint=require('../cinematic-fingerprint.js');
 function fixtures(){
  const films=Array.from({length:38},(_,i)=>({id:i+1,title:'Test Film '+(i+1),
   poster:'https://example.invalid/poster/'+(i+1),media:'movie',
   genres:i%3===0?['Drama','Romance']:['Drama'],matched:['Test Film 1','Test Film 2'],
-  synopsis:i%4===0?'A lonely artist recalls memories and leaves home.':'An ordinary story of relationships.'}));
+  synopsis:i%4===0?'A lonely artist goes on a road trip and recalls memories.':'An ordinary story of relationships.'}));
  const byTitle=new Map(films.map(x=>[x.title,x]));
  const profiles=[{name:'Fictional A',history:[['Test Film 1','Loved'],['Test Film 2','Loved'],['Test Film 3','Not for me']]},
   {name:'Fictional B',history:[['Test Film 1','Liked'],['Test Film 4','Loved'],['Test Film 2','Okay']]}];
@@ -22,7 +23,7 @@ function fixtures(){
   throw Error('Unexpected test API operation '+data.mode);
  };
  const toEntry=(item,position)=>({key:'tmdb-movie-'+item.id,title:item.title,category:'movies',
-  position,tmdb:{id:item.id,media:'movie'},directMatches:(item.matched||[]).map(x=>x.toLowerCase().replaceAll(' ','-')),
+  position,tmdb:{id:item.id,media:'movie'},synopsis:item.synopsis,directMatches:(item.matched||[]).map(x=>x.toLowerCase().replaceAll(' ','-')),
   facets:{genres:item.genres.map(x=>x.toLowerCase()),themes:[],tones:[],directors:[],
    writers:[],narrativeThemes:item.id%4===0?['solitude']:[],pace:null}});
  const features=async keys=>new Map(keys.map(key=>{
@@ -84,4 +85,21 @@ test('disallows unbounded provider requests and excessive profiles',async()=>{
  await assert.rejects(()=>audit.run({...options,maxCandidates:1000}),/Invalid catalog QA request budget/);
  assert.equal(audit.chooseAnchors([{item:{title:'A',genres:['Drama']},rating:'Loved'},
  {item:{title:'B',genres:['Comedy']},rating:'Liked'}],1).length,1);
+});
+
+test('fingerprint enriches structural audit in shadow mode without altering ranking',async()=>{
+ const options=fixtures();
+ const baseline=await audit.run({...options,profiles:options.profiles.slice(0,1),maxPlans:2,maxCandidates:24});
+ const extended=await audit.run({...options,profiles:options.profiles.slice(0,1),
+  maxPlans:2,maxCandidates:24,fingerprint});
+ const old=baseline.profiles[0],updated=extended.profiles[0];
+ assert.equal(old.qualified,updated.qualified);
+ assert.equal(old.firstShelfComplete,updated.firstShelfComplete);
+ assert.equal(old.secondShelfComplete,updated.secondShelfComplete);
+ assert.equal(old.fingerprintExtraPlotTitles,0);
+ assert.ok(updated.fingerprintExtraPlotTitles>0);
+ assert.ok(updated.fingerprintNewPlotLinks>0);
+ assert.ok(updated.fingerprintLinkedTitles>=updated.fingerprintNewPlotLinks);
+ assert.ok(extended.summary.fingerprintExtraPlotClueCoverage>0);
+ assert.equal(updated.candidateAccounting,'reconciled');
 });
