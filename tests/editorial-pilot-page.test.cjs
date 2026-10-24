@@ -10,7 +10,7 @@ test('editorial pilot is separate from discover and does not load catalog or tel
  assert.doesNotMatch(html,/\bfetch\s*\(|\bXMLHttpRequest\b|\bsendBeacon\s*\(/);
  assert.doesNotMatch(html,/\blocalStorage\s*\.|\bsessionStorage\s*\.|\bindexedDB\s*\./);
  assert.doesNotMatch(html,/afterlogue-catalog|sb_publishable_|\/rest\/v1\//);
- assert.match(html,/No changes to recommendations/);
+ assert.match(html,/Nothing here changes Afterlogue.s actual recommendations/);
 });
 test('pilot form gates firsthand observation and local export behavior',()=>{
  for(const id of ['reviewer','film','review-date','attest','dimensions','save',
