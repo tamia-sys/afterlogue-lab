@@ -375,7 +375,7 @@ async function retrieveNextBatch(){
   track("pipeline_audit",{payload:{retrieval_round:retrievalRound,source:browseItems.length?"lab-browse":"fallback",provider:browse.audit||null,returned,invalid,previouslyKnown,withinRound,failed,...rejected}});
   $("retrieval-audit").textContent=summary+" · "+meta.size+" enriched · "+
    eligible.length+" relevant · "+preBalance.length+" before balance → "+qualified.length+" after balance · "+strongCount+" multi-signal · "+partialCount+" single-signal · "+
-   "Excluded: "+rejected.lowScore+" low score, "+rejected.notPersonalized+" not personalized, "+rejected.unmatched+" unmatched, "+rejected.balanceRemoved+" by balancing · "+
+   "Excluded: "+rejected.lowScore+" low score, "+rejected.notPersonalized+" not personalized, "+rejected.unmatched+" unmatched, "+rejected.noCinematicEvidence+" no cinematic evidence, "+rejected.balanceRemoved+" by balancing · "+
    Math.min(5,qualified.length)+" selected";
   if(!qualified.length){
    setStatus("Fresh retrieval succeeded, but no new candidates passed relevance checks. No filler or repeats shown.");
