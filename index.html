@@ -380,6 +380,7 @@ async function retrieveNextBatch(){
   const eligible=ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&x.personalized&&x.matched?.length&&x.cinematicSignalCount>=1);
   const rejected={
     fresh:enriched.length,
+    backlog:pending.length,
     lowScore:ranked.filter(x=>freshKeys.has(x.key)&&!(x.score>0)).length,
     notPersonalized:ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&!x.personalized).length,
     unmatched:ranked.filter(x=>freshKeys.has(x.key)&&x.score>0&&x.personalized&&!x.matched?.length).length,
