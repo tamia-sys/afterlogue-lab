@@ -136,5 +136,7 @@ test('optional disliked-film shadow controls cannot change ranking or eligibilit
  assert.ok(b.metadataRequested>=a.metadataRequested);
  assert.equal(contrast.summary.keywordNegativeControlProfiles,1);
  assert.equal(contrast.summary.keywordShadowNegativesUnresolved,1);
+ assert.ok(contrast.summary.keywordQualifiedWithMixedEvidence>=0);
+ assert.ok(contrast.summary.keywordQualifiedWithExactConflict>=0);
  assert.ok(!JSON.stringify(contrast).includes('Test Film 38'));
 });
