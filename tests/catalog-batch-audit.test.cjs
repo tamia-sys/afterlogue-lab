@@ -30,7 +30,8 @@ function fixtures(){
   const id=Number(key.replace('tmdb-movie-',''));
   return [key,{genres:id%3===0?['drama','romance']:['drama'],
    themes:id%2===0?['solitude','memory']:['connection','memory'],
-   tones:id%3===0?['reflective']:['tender'],directors:['verified-id-1'],writers:[]}];
+   tones:id%3===0?['reflective']:['tender'],directors:['verified-id-1'],writers:[],
+   keywordNames:['train station','displacement']}];
  }));
  const enrich=(items,meta)=>items.map(x=>({...x,facets:{...x.facets,...meta.get(x.key),
   narrativeThemes:x.facets.narrativeThemes}}));
@@ -101,5 +102,9 @@ test('fingerprint enriches structural audit in shadow mode without altering rank
  assert.ok(updated.fingerprintNewPlotLinks>0);
  assert.ok(updated.fingerprintLinkedTitles>=updated.fingerprintNewPlotLinks);
  assert.ok(extended.summary.fingerprintExtraPlotClueCoverage>0);
+ assert.ok(updated.fingerprintRawKeywordLinkedTitles>0);
+ assert.ok(extended.summary.fingerprintRawKeywordLinkCoverage>0);
+ assert.equal(old.qualified,updated.qualified);
+ assert.equal(updated.fingerprintRawKeywordUnqualifiedTitles>=0,true);
  assert.equal(updated.candidateAccounting,'reconciled');
 });
