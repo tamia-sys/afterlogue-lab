@@ -69,7 +69,7 @@ if(!eligibility)throw Error("Recommendation eligibility policy failed to load.")
   const p=profiles[Number($("persona").value)]||profiles[0];
   const row={session_id:testId,event_type,persona:p.name,phase:Number($("phase").value)||0,
    batch_number:page,movie_key:movie?.key||null,movie_title:movie?.title||null,choice,
-   payload:{...payload,build:"taste-v2-module-1",run:runToken}};
+   payload:{...payload,build:"taste-v2-evidence-audit-1",run:runToken}};
   const task=async()=>{
    try{
     const res=await fetch(telemetryEndpoint,{method:"POST",headers:{"apikey":telemetryKey,
@@ -234,8 +234,16 @@ async function generate(){
  allRanked=cinematicRerank(ranked);
  pool=feedbackAdjustedPool();
  const initialQualified=eligibility.eligible(allRanked,{ratedKeys:Object.keys(ratingSignals)});
- track("pipeline_audit",{payload:{retrieval_round:0,candidatePool:candidateMap.size,evaluated:candidates.length,deferred:initialDeferred,metadata:metadata.size,ranked:allRanked.length,verifiedCinematic:initialQualified.length,balanced:pool.length,selected:Math.min(5,pool.length),source:"initial_mixed"}});
- $("retrieval-audit").textContent+=" · "+initialQualified.length+" verified cinematic matches · "+pool.length+" qualified";
+ const evidenceAudit={
+  oneKind:initialQualified.filter(x=>x.cinematicEvidenceKindCount===1).length,
+  multipleKinds:initialQualified.filter(x=>x.cinematicEvidenceKindCount>=2).length,
+  filmmakerOnly:initialQualified.filter(x=>x.cinematicEvidenceTypes?.length&&x.cinematicEvidenceTypes.every(t=>t==="director"||t==="writer")).length,
+  positiveAnchors2plus:initialQualified.filter(x=>x.cinematicAnchorCount>=2).length,
+  withoutThemes:initialQualified.filter(x=>!x.facets.themes?.length).length,
+  withoutTones:initialQualified.filter(x=>!x.facets.tones?.length).length
+ };
+ track("pipeline_audit",{payload:{retrieval_round:0,candidatePool:candidateMap.size,evaluated:candidates.length,deferred:initialDeferred,metadata:metadata.size,ranked:allRanked.length,verifiedCinematic:initialQualified.length,balanced:pool.length,selected:Math.min(5,pool.length),source:"initial_mixed",evidenceAudit}});
+ $("retrieval-audit").textContent+=" · "+initialQualified.length+" qualified cinematic matches · "+pool.length+" balanced · "+evidenceAudit.multipleKinds+" multi-signal · "+evidenceAudit.oneKind+" single-signal · "+evidenceAudit.filmmakerOnly+" filmmaker-only · "+evidenceAudit.positiveAnchors2plus+" multiple Log anchors";
  const excluded=new Set(source.map(x=>x.key));pool=pool.filter(x=>!excluded.has(x.key));
  $("stats").textContent="Verified Log: "+found.length+"/"+logged.length+" · Candidates: "+candidates.length+" · Enriched: "+metadata.size+" · Qualified: "+pool.length;
  showNext();if(pool.length<5)setStatus("Only "+pool.length+" qualified titles found in this bounded sample; no filler invented.");
