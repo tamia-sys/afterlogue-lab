@@ -62,6 +62,12 @@
    fingerprintRawKeywordLinkCoverage:ratio(sum('fingerprintRawKeywordLinkedTitles'),sum('evaluatedCandidates')),
    fingerprintRawOnlyLinkCoverage:ratio(sum('fingerprintRawKeywordOnlyTitles'),sum('evaluatedCandidates')),
    fingerprintRawUnqualifiedCoverage:ratio(sum('fingerprintRawKeywordUnqualifiedTitles'),sum('evaluatedCandidates')),
+   keywordRawLinkRate:ratio(sum('keywordRawLinks'),sum('evaluatedCandidates')),
+   keywordSpecificLinkRate:ratio(sum('keywordSpecificLinks'),sum('evaluatedCandidates')),
+   keywordGenericOnlyRate:ratio(sum('keywordGenericOnly'),sum('evaluatedCandidates')),
+   keywordMultiLabelRate:ratio(sum('keywordMultiLabel'),sum('evaluatedCandidates')),
+   keywordNegativeOverlapRate:ratio(sum('keywordNegativeOverlap'),sum('evaluatedCandidates')),
+   keywordNegativeControlProfiles:successes.filter(x=>x.keywordNegativeAnchors>0).length,
    multiSignalEligibleShare:ratio(sum('multiSignalEligible'),sum('qualified')),
    meanDistinctGenresFirstFive:mean('topGenres'),
    meanDistinctPositiveLogAnchorsFirstFive:mean('topAnchors'),
@@ -70,7 +76,7 @@
    independentBrowseFailures:sum('browseFailures'),metadataFailures:sum('metadataFailures')};
  }
  async function run({profiles,api,resolveTitle,toEntry,features,enrich,engine,cinematic,policy,
-   anchorBalance,fingerprint=null,onProgress=()=>{},shouldCancel=()=>false,maxPlans=4,maxCandidates=60}={}){
+   anchorBalance,fingerprint=null,keywordAudit=null,onProgress=()=>{},shouldCancel=()=>false,maxPlans=4,maxCandidates=60}={}){
   if(!Array.isArray(profiles)||!profiles.length||profiles.length>20)throw Error('Choose 1–20 fictional viewer histories');
   if(![api,resolveTitle,toEntry,features,enrich].every(x=>typeof x==='function')||
      !engine?.rank||!cinematic?.rank||!policy?.eligible||!anchorBalance?.balance)
@@ -216,6 +222,22 @@
       }))fpSummary.fingerprintNewPlotLinks++;
      }
     }
+    // Independent SHADOW pass. Both negatives and positives are fictional.
+    const keywordStats=(keywordAudit?.inspect)?keywordAudit.inspect({
+      positive:complete.filter(x=>["Loved","Liked"].includes(ratings[x.key])),
+      negative:complete.filter(x=>ratings[x.key]==="Not for me"),
+      candidates:candidateFeatures
+    }):null;
+    const keywordCounts={
+      keywordRawLinks:keywordStats?.candidatesWithRawPositiveOverlap||0,
+      keywordSpecificLinks:keywordStats?.candidatesWithSpecificOverlap||0,
+      keywordGenericOnly:keywordStats?.candidatesOnlyGenericOrCommon||0,
+      keywordMultiLabel:keywordStats?.candidatesWithTwoOrMoreSpecificLabels||0,
+      keywordNegativeOverlap:keywordStats?.candidatesWithSpecificNegativeOverlap||0,
+      keywordNegativeAnchors:keywordStats?.negativeAnchors||0,
+      keywordCatalogLabels:keywordStats?.catalogKeywordsSeen||0,
+      keywordPoolCommonCutoff:keywordStats?.poolCommonCutoff||0
+    };
     const row={profile:profile.name,historyTitles:found.length,positiveAnchors:selected.length,
      titleRequests:plans.length,recommendationFailures,browseFailures,metadataFailures,
      invalidProviderItems:invalid,providerDuplicates:duplicated,uniqueRetrieved:all.length,
@@ -228,7 +250,7 @@
      qualified:eligible.length,multiSignalEligible:bestEvidenceMultiple,
      synopsisOnlyEligible:eligible.filter(x=>x.cinematicSynopsisOnly).length,
      legacyPositive:legacyRanked.filter(x=>x.score>0).length,
-     bestEvidenceNone,bestEvidenceSingle,bestEvidenceMultiple,...funnel,...routes,...fpSummary,
+     bestEvidenceNone,bestEvidenceSingle,bestEvidenceMultiple,...funnel,...routes,...fpSummary,...keywordCounts,
      firstShelfComplete:Number(top.length===5),secondShelfComplete:Number(next.length===5),
      topGenres:unique(top.flatMap(x=>facetsOf(x).genres||[])).length,
      topAnchors:unique(top.map(x=>x.cinematicAnchor).filter(Boolean)).length,
@@ -254,6 +276,7 @@
    'Candidate rejection categories are exclusive but diagnostic, not a causal explanation for taste.',
    'Source-specific yields are based on this bounded sample, not global TMDB search relevance.',
    'Cinematic Fingerprint tags are experimental, based on literal synopsis phrasing, and are excluded from recommendation scoring.',
+   'Keyword specificity is a within-sample heuristic. Multiple community tags are not independent proof of film similarity and do not affect scoring.',
     'No private Log, real member ID, or user interest responses were accessed.']};
  }
  return Object.freeze({run,summarize,chooseAnchors});
