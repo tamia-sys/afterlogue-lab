@@ -68,7 +68,7 @@ if(!eligibility)throw Error("Recommendation eligibility policy failed to load.")
   const p=profiles[Number($("persona").value)]||profiles[0];
   const row={session_id:testId,event_type,persona:p.name,phase:Number($("phase").value)||0,
    batch_number:page,movie_key:movie?.key||null,movie_title:movie?.title||null,choice,
-   payload:{...payload,build:"taste-v2-experiment-2",run:runToken}};
+   payload:{...payload,build:"taste-v2-experiment-3",run:runToken}};
   const task=async()=>{
    try{
     const res=await fetch(telemetryEndpoint,{method:"POST",headers:{"apikey":telemetryKey,
@@ -276,8 +276,11 @@ function cinematicRerank(entries){
    total+Math.min(6,m.score)*m.weight*[.75,.24,.12,.06][i],0);
   const negativePenalty=dislikes.slice(0,2).reduce((total,m,i)=>
    total+Math.min(6,m.score)*[.58,.18][i],0);
-  const adjustment=!matches.length?-Math.max(12,item.score*.75):
-   Math.max(-6,Math.min(7,evidence-negativePenalty+Math.min(1.4,(matches.length-1)*.45)));
+  // Dislikes must be able to lower compatibility, even when positive
+  // evidence is sparse. Otherwise a negative-only match escaped punishment.
+  const adjustment=!matches.length
+   ?-Math.max(12,item.score*.75)-Math.min(4,negativePenalty)
+   :Math.max(-9,Math.min(7,evidence-negativePenalty+Math.min(1.4,(matches.length-1)*.45)));
   const explanation=matches.length?
    "Catalog evidence from your Log: "+matches.slice(0,2).map(m=>m.source+" ("+
     m.details.slice(0,2).map(d=>d.type.replace(/_/g," ")+" — "+d.value).join("; ")+")").join("; ")+
